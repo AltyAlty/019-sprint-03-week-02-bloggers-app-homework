@@ -1,0 +1,8 @@
+node_modules
+dist
+.idea
+/.idea
+.env
+*/.env
+**/.env
+src/db/mongodb/data/

@@ -1,0 +1,88 @@
+import { ObjectId } from 'mongodb';
+
+export const validUsersPaginationSettings = {
+  pageSize: 5,
+  pageNumber: 1,
+  searchLoginTerm: 'i',
+  searchEmailTerm: 'abc',
+  sortDirection: 'asc',
+  sortBy: 'login',
+};
+
+export const invalidUsersPaginationSettings = {
+  pageSize: 101,
+  pageNumber: -1,
+  sortDirection: 'cas',
+  sortBy: 'name',
+};
+
+export const validUserData = {
+  data_01: { login: 'John', email: 'moon@example.com' },
+  data_02: { login: 'Abby', email: 'earth@example.com' },
+  data_03: { login: 'Mike', email: 'pluto@example.com' },
+  data_04: { login: 'Jim', email: 'mercury@example.abc' },
+  data_05: { login: 'Kate', email: 'venus@example.com' },
+  data_06: { login: 'Billy', email: 'satrun@example.abc' },
+};
+
+export const validUserLogins = {
+  login_01: 'user02',
+  login_02: 'user03',
+  login_03: 'user04',
+  login_04: 'user05',
+  login_05: 'user06',
+  login_06: 'user07',
+  login_07: 'user08',
+};
+
+export const invalidUserLogins = {
+  login_01: '',
+  login_02: '   ',
+  login_03: '0123456789111111',
+  login_04: '!@#$%^&*()',
+  login_05: 'ab',
+  login_06: null,
+};
+
+export const validUserEmails = {
+  email_01: 'user02@example.com',
+  email_02: 'user03@example.com',
+  email_03: 'user04@example.com',
+  email_04: 'user05@example.com',
+  email_05: 'user06@example.com',
+  email_06: 'user07@example.com',
+  email_07: 'user08@example.com',
+};
+
+export const invalidUserEmails = {
+  email_01: '',
+  email_02: '   ',
+  email_03: 'user#example.com',
+  email_04: 'fd2xny8xnf',
+  email_05: null,
+};
+
+export const invalidUserLoginsOrEmails = {
+  loginOrEmail_01: '',
+  loginOrEmail_02: '   ',
+  loginOrEmail_03: null,
+};
+
+export const validUserPasswords = { password_01: 'zxc321QWE654' };
+
+export const invalidUserPasswords = {
+  password_01: '',
+  password_02: '   ',
+  password_03: '12345',
+  password_04: '012345678901234567890',
+  password_05: '01234567890123456789000000',
+  password_06: null,
+};
+
+export const validUserIds = { id_01: new ObjectId().toString() };
+
+export const invalidUserIds = {
+  id_01: 'ABC',
+  id_02: 2,
+  id_03: null,
+};
