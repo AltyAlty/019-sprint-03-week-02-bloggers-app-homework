@@ -27,13 +27,8 @@ export const usersQueryService = {
 
     /*Если пользователь был найден, то преобразовываем пользователя из БД в подготовленного для отправки пользователя.*/
     const userOutput: UserOutputDTO = mapToUserOutputDTO(userDB);
-
     /*Возвращаем ResultObject с преобразованным пользователем.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { userOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { userOutput }, extensions: [] };
   },
 
   /*Метод для поиска пользователей.*/
@@ -52,10 +47,6 @@ export const usersQueryService = {
     });
 
     /*Возвращаем ResultObject с преобразованными пользователями.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { paginatedUserListOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { paginatedUserListOutput }, extensions: [] };
   },
 };

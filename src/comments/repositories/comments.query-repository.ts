@@ -12,10 +12,8 @@ export const commentsQueryRepository = {
   async findById(id: string): Promise<CommentDBType | null> {
     /*Просим коллекцию "commentsCollection" найти комментарий по ID в БД.*/
     const comment: CommentDBType | null = await db.commentsCollection.findOne({ _id: new ObjectId(id) });
-    /*Если комментарий не был найден, то возвращаем null.*/
-    if (!comment) return null;
-    /*Если комментарий был найден, то возвращаем его.*/
-    return comment;
+    /*Если комментарий был найден, то возвращаем его, иначе возвращаем null.*/
+    return comment ?? null;
   },
 
   /*Метод для поиска комментариев по ID поста в БД.*/

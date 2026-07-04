@@ -24,13 +24,8 @@ export const blogsService = {
 
     /*Просим репозиторий "blogsRepository" создать блог в БД.*/
     const createdBlogId: string = await blogsRepository.create(newBlog);
-
     /*Возвращаем ResultObject с ID созданного блога.*/
-    return {
-      status: ResultStatuses.Created,
-      data: { createdBlogId },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Created, data: { createdBlogId }, extensions: [] };
   },
 
   /*Метод для поиска блога по ID.*/
@@ -50,13 +45,8 @@ export const blogsService = {
 
     /*Если блог был найден, то преобразовываем блог из БД в подготовленный для отправки клиенту блог.*/
     const blogOutput: BlogOutputDTO = mapToBlogOutputDTO(blogDB);
-
     /*Возвращаем ResultObject с преобразованным блогом.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { blogOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { blogOutput }, extensions: [] };
   },
 
   /*Метод для изменения блога по ID.*/
@@ -75,11 +65,7 @@ export const blogsService = {
     }
 
     /*Если блог был изменен, то возвращаем ResultObject с информацией об этом.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для удаления блога по ID.*/
@@ -101,12 +87,7 @@ export const blogsService = {
     await postsService.deleteAllByBlogId(id);
     /*Просим репозиторий "blogsRepository" удалить блог по ID в БД.*/
     await blogsRepository.deleteById(id);
-
     /*Возвращаем ResultObject с информацией об удалении блога.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 };

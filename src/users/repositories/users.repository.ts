@@ -17,20 +17,16 @@ export const usersRepository = {
   async findById(id: string): Promise<UserDBType | null> {
     /*Просим коллекцию "usersCollection" найти пользователя по ID в БД.*/
     const user: UserDBType | null = await db.usersCollection.findOne({ _id: new ObjectId(id) });
-    /*Если пользователь не был найден, то возвращаем null.*/
-    if (!user) return null;
-    /*Если пользователь был найден, то возвращаем его.*/
-    return user;
+    /*Если пользователь был найден, то возвращаем его, иначе возвращаем null.*/
+    return user ?? null;
   },
 
   /*Метод для поиска пользователя по email в БД.*/
   async findByEmail(email: string): Promise<UserDBType | null> {
     /*Просим коллекцию "usersCollection" найти пользователя по email в БД.*/
     const user: UserDBType | null = await db.usersCollection.findOne({ email });
-    /*Если пользователь не был найден, то возвращаем null.*/
-    if (!user) return null;
-    /*Если пользователь был найден, то возвращаем его.*/
-    return user;
+    /*Если пользователь был найден, то возвращаем его, иначе возвращаем null.*/
+    return user ?? null;
   },
 
   /*Метод для поиска пользователя по логину/email в БД.*/
@@ -40,10 +36,8 @@ export const usersRepository = {
       $or: [{ email: loginOrEmail }, { login: loginOrEmail }],
     });
 
-    /*Если пользователь не был найден, то возвращаем null.*/
-    if (!user) return null;
-    /*Если пользователь был найден, то возвращаем его.*/
-    return user;
+    /*Если пользователь был найден, то возвращаем его, иначе возвращаем null.*/
+    return user ?? null;
   },
 
   /*Метод для подтверждения регистрации пользователя по ID пользователя в БД.*/

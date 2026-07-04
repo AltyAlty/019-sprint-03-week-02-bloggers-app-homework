@@ -30,13 +30,8 @@ export const commentsQueryService = {
     /*Если комментарий был найден, то преобразовываем комментарий из БД в подготовленный для отправки клиенту
     комментарий.*/
     const commentOutput: CommentOutputDTO = mapToCommentOutputDTO(commentDB);
-
     /*Возвращаем ResultObject с преобразованным комментарием.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { commentOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { commentOutput }, extensions: [] };
   },
 
   /*Метод для поиска комментариев по ID поста.*/
@@ -61,10 +56,6 @@ export const commentsQueryService = {
     });
 
     /*Возвращаем ResultObject с преобразованными для пагинации комментариями.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { paginatedCommentListOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { paginatedCommentListOutput }, extensions: [] };
   },
 };

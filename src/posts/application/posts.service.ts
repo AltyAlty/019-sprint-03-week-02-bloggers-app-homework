@@ -32,13 +32,8 @@ export const postsService = {
 
     /*Просим репозиторий "postsRepository" создать пост в БД.*/
     const createdPostId: string = await postsRepository.create(newPost);
-
     /*Возвращаем ResultObject с ID созданного поста.*/
-    return {
-      status: ResultStatuses.Created,
-      data: { createdPostId },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Created, data: { createdPostId }, extensions: [] };
   },
 
   /*Метод для поиска поста по ID.*/
@@ -58,13 +53,8 @@ export const postsService = {
 
     /*Если пост был найден, то преобразовываем пост из БД в подготовленный для отправки клиенту пост.*/
     const postOutput: PostOutputDTO = mapToPostOutputDTO(postDB);
-
     /*Возвращаем ResultObject с преобразованным постом.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { postOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { postOutput }, extensions: [] };
   },
 
   /*Метод для изменения поста по ID.*/
@@ -83,11 +73,7 @@ export const postsService = {
     }
 
     /*Если пост был изменен, то возвращаем ResultObject с информацией об этом.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для удаления поста по ID.*/
@@ -108,20 +94,12 @@ export const postsService = {
     }
 
     /*Если пост был удален, то возвращаем ResultObject с информацией об этом.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для удаления постов по ID блога.*/
   async deleteAllByBlogId(blogId: string): Promise<Result<{ deletedPostsCount: number } | null>> {
-    /*Просим сервис "blogsService" найти блог по ID.*/
-    const blogResult: Result<{ blogOutput: BlogOutputDTO } | null> = await blogsService.findById(blogId);
-    /*Если блог не был найден, то возвращаем ResultObject с информацией об этом.*/
-    if (blogResult.status !== ResultStatuses.Ok) return blogResult as Result;
-    /*Если блог был найден, то просим репозиторий "postsRepository" найти посты в блоге по ID в БД.*/
+    /*Просим репозиторий "postsRepository" найти посты в блоге по ID в БД.*/
     const postsDB: PostDBType[] | null = await postsRepository.findAllByBlogId(blogId);
 
     /*Если посты в блоге были найдены, то удаляем комментарии внутри постов.*/
@@ -134,12 +112,7 @@ export const postsService = {
 
     /*Просим репозиторий "postsRepository" удалить посты по ID блога в БД.*/
     const deletedPostsCount: number = await postsRepository.deleteAllByBlogId(blogId);
-
     /*Возвращаем ResultObject с информацией об удалении постов.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: { deletedPostsCount },
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: { deletedPostsCount }, extensions: [] };
   },
 };

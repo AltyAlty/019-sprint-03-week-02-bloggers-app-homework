@@ -11,11 +11,9 @@ export const postsQueryRepository = {
   /*Метод для поиска поста по ID в БД.*/
   async findById(id: string): Promise<PostDBType | null> {
     /*Просим коллекцию "postsCollection" найти пост по ID в БД.*/
-    const result: PostDBType | null = await db.postsCollection.findOne({ _id: new ObjectId(id) });
-    /*Если пост не был найден, то возвращаем null.*/
-    if (!result) return null;
-    /*Если пост был найден, то возвращаем его.*/
-    return result;
+    const post: PostDBType | null = await db.postsCollection.findOne({ _id: new ObjectId(id) });
+    /*Если пост был найден, то возвращаем его, иначе возвращаем null.*/
+    return post ?? null;
   },
 
   /*Метод для поиска постов в БД.*/

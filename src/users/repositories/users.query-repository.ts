@@ -12,10 +12,8 @@ export const usersQueryRepository = {
   async findById(id: string): Promise<UserDBType | null> {
     /*Просим коллекцию "usersCollection" найти пользователя по ID в БД.*/
     const user: UserDBType | null = await db.usersCollection.findOne({ _id: new ObjectId(id) });
-    /*Если пользователь не был найден, то возвращаем null.*/
-    if (!user) return null;
-    /*Если пользователь был найден, то возвращаем его.*/
-    return user;
+    /*Если пользователь был найден, то возвращаем его, иначе возвращаем null.*/
+    return user ?? null;
   },
 
   /*Метод для поиска пользователей в БД.*/

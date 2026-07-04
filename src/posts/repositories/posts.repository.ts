@@ -18,20 +18,16 @@ export const postsRepository = {
   async findById(id: string): Promise<PostDBType | null> {
     /*Просим коллекцию "postsCollection" найти пост по ID в БД.*/
     const post: PostDBType | null = await db.postsCollection.findOne({ _id: new ObjectId(id) });
-    /*Если пост не был найден, то возвращаем null.*/
-    if (!post) return null;
-    /*Если пост был найден, то возвращаем его.*/
-    return post;
+    /*Если пост был найден, то возвращаем его, иначе возвращаем null.*/
+    return post ?? null;
   },
 
   /*Метод для поиска постов по ID блога в БД.*/
   async findAllByBlogId(blogId: string): Promise<PostDBType[] | null> {
     /*Просим коллекцию "postsCollection" найти посты по ID блога в БД.*/
     const posts: PostDBType[] = await db.postsCollection.find({ blogId }).toArray();
-    /*Если постов не было найдено, то возвращаем null.*/
-    if (!posts || posts.length === 0) return null;
-    /*Если посты были найдены, то возвращаем их.*/
-    return posts;
+    /*Если посты были найдены, то возвращаем их, иначе возвращаем null.*/
+    return !posts || posts.length === 0 ? null : posts;
   },
 
   /*Метод для изменения поста по ID в БД.*/
@@ -39,14 +35,7 @@ export const postsRepository = {
     /*Просим коллекцию "postsCollection" изменить пост по ID в БД.*/
     const updateResult: UpdateResult<PostType> = await db.postsCollection.updateOne(
       { _id: new ObjectId(id) },
-      {
-        $set: {
-          title: dto.title,
-          shortDescription: dto.shortDescription,
-          content: dto.content,
-          blogId: dto.blogId,
-        },
-      }
+      { $set: { title: dto.title, shortDescription: dto.shortDescription, content: dto.content, blogId: dto.blogId } }
     );
 
     /*Возвращаем количество постов, попавших под фильтр.*/

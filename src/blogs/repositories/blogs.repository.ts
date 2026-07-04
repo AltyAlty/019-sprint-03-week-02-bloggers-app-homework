@@ -18,10 +18,8 @@ export const blogsRepository = {
   async findById(id: string): Promise<BlogDBType | null> {
     /*Просим коллекцию "blogsCollection" найти блог по ID в БД.*/
     const blog: BlogDBType | null = await db.blogsCollection.findOne({ _id: new ObjectId(id) });
-    /*Если блог не был найден, то возвращаем null.*/
-    if (!blog) return null;
-    /*Если блог был найден, то возвращаем его.*/
-    return blog;
+    /*Если блог был найден, то возвращаем его, иначе возвращаем null.*/
+    return blog ?? null;
   },
 
   /*Метод для изменения блога по ID в БД.*/
@@ -29,13 +27,7 @@ export const blogsRepository = {
     /*Просим коллекцию "blogsCollection" изменить блог по ID в БД.*/
     const updateResult: UpdateResult<BlogType> = await db.blogsCollection.updateOne(
       { _id: new ObjectId(id) },
-      {
-        $set: {
-          name: dto.name,
-          description: dto.description,
-          websiteUrl: dto.websiteUrl,
-        },
-      }
+      { $set: { name: dto.name, description: dto.description, websiteUrl: dto.websiteUrl } }
     );
 
     /*Возвращаем количество блогов, попавших под фильтр.*/

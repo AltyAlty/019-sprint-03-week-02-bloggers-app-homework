@@ -69,10 +69,8 @@ export const authRepository = {
   async findSessionByUserIdAndDeviceId(userId: string, deviceId: string): Promise<SessionDBType | null> {
     /*Просим коллекцию "sessionsCollection" найти сессию по ID устройства пользователя в БД.*/
     const session: SessionDBType | null = await db.sessionsCollection.findOne({ userId, deviceId });
-    /*Если сессия не была найдена, то возвращаем null.*/
-    if (!session) return null;
-    /*Если сессия была найдена, то возвращаем ее.*/
-    return session;
+    /*Если сессия была найдена, то возвращаем ее, иначе возвращаем null.*/
+    return session ?? null;
   },
 
   /*Метод для поиска сессии по ID пользователя, ID устройства пользователя и дате выдачи RT в БД.*/
@@ -83,10 +81,8 @@ export const authRepository = {
   ): Promise<SessionDBType | null> {
     /*Просим коллекцию "sessionsCollection" найти сессию по дате выдачи RT в БД.*/
     const session: SessionDBType | null = await db.sessionsCollection.findOne({ userId, deviceId, iat });
-    /*Если сессия не была найдена, то возвращаем null.*/
-    if (!session) return null;
-    /*Если сессия была найдена, то возвращаем ее.*/
-    return session;
+    /*Если сессия была найдена, то возвращаем ее, иначе возвращаем null.*/
+    return session ?? null;
   },
 
   /*Метод для поиска сессий по ID пользователя в БД.*/
@@ -103,10 +99,8 @@ export const authRepository = {
       confirmationCode: code,
     });
 
-    /*Если данные о подтверждении регистрации пользователя не были найдены, то возвращаем null.*/
-    if (!emailConfirmation) return null;
-    /*Если данные о подтверждении регистрации пользователя были найдены, то возвращаем их.*/
-    return emailConfirmation;
+    /*Если данные о подтверждении регистрации пользователя были найдены, то возвращаем их, иначе возвращаем null.*/
+    return emailConfirmation ?? null;
   },
 
   /*Метод для поиска данных о подтверждении регистрации пользователя по ID пользователя в БД.*/
@@ -114,10 +108,8 @@ export const authRepository = {
     /*Просим коллекцию "emailConfirmationsCollection" найти данные о подтверждении регистрации пользователя по ID
     пользователя в БД.*/
     const emailConfirmation: EmailConfirmationDBType | null = await db.emailConfirmationsCollection.findOne({ userId });
-    /*Если данные о подтверждении регистрации пользователя не были найдены, то возвращаем null.*/
-    if (!emailConfirmation) return null;
-    /*Если данные о подтверждении регистрации пользователя были найдены, то возвращаем их.*/
-    return emailConfirmation;
+    /*Если данные о подтверждении регистрации пользователя были найдены, то возвращаем их, иначе возвращаем null.*/
+    return emailConfirmation ?? null;
   },
 
   /*Метод для изменения сессии по дате создания RT в БД.*/
@@ -142,12 +134,7 @@ export const authRepository = {
     пользователя в БД.*/
     const updateResult: UpdateResult = await db.emailConfirmationsCollection.updateOne(
       { userId },
-      {
-        $set: {
-          confirmationCode: confirmationCode,
-          expirationDate: expirationDate,
-        },
-      }
+      { $set: { confirmationCode: confirmationCode, expirationDate: expirationDate } }
     );
 
     /*Возвращаем количество данных о подтверждении регистрации пользователя, попавших под фильтр.*/

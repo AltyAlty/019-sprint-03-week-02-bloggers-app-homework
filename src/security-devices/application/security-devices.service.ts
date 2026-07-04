@@ -12,13 +12,8 @@ export const securityDevicesService = {
   async create(securityDevice: SecurityDeviceType): Promise<Result<{ createdSecurityDeviceId: string }>> {
     /*Просим репозиторий "securityDevicesRepository" добавить устройство пользователя в БД.*/
     const createdSecurityDeviceId: string = await securityDevicesRepository.create(securityDevice);
-
     /*Возвращаем ResultObject с ID созданного устройства пользователя.*/
-    return {
-      status: ResultStatuses.Created,
-      data: { createdSecurityDeviceId },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Created, data: { createdSecurityDeviceId }, extensions: [] };
   },
 
   /*Метод для поиска устройства пользователя по ID.*/
@@ -39,13 +34,8 @@ export const securityDevicesService = {
     /*Если устройство пользователя было найдено, то преобразовываем устройство пользователя из БД в подготовленное для
     отправки клиенту устройство пользователя.*/
     const securityDeviceOutput: SecurityDeviceOutputDTO = mapToSecurityDeviceOutputDTO(securityDeviceDB);
-
     /*Возвращаем ResultObject с преобразованным устройством пользователя.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { securityDeviceOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { securityDeviceOutput }, extensions: [] };
   },
 
   /*Метод для изменения устройства пользователя по ID.*/
@@ -64,36 +54,22 @@ export const securityDevicesService = {
     }
 
     /*Если устройство пользователя было изменено, то возвращаем ResultObject с информацией об этом.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для удаления устройства пользователя по ID устройства.*/
   async deleteById(id: string): Promise<Result<{}>> {
     /*Просим репозиторий "securityDevicesRepository" удалить устройство пользователя по ID устройства в БД.*/
     await securityDevicesRepository.deleteById(id);
-
     /*Возвращаем ResultObject с информацией об удалении устройства пользователя.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для удаления всех устройств пользователя, кроме текущего.*/
   async deleteAllExceptCurrentDevice(id: string): Promise<Result<{}>> {
     /*Просим репозиторий "securityDevicesRepository" удалить все устройства пользователя, кроме текущего, в БД.*/
     await securityDevicesRepository.deleteAllExceptCurrentDevice(id);
-
     /*Возвращаем ResultObject с информацией об удалении устройств пользователя.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 };

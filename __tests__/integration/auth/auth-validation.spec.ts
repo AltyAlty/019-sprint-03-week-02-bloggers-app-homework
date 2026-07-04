@@ -37,6 +37,7 @@ import { setTimeout } from 'timers/promises';
 import { createNodemailerAdapterSendMailSpyAndMock } from '../../test-doubles/spies-mocks';
 import { EmailConfirmationDBType } from '../../../src/auth/repositories/types/email-сonfirmation-db.type';
 import { authRepository } from '../../../src/auth/repositories/auth.repository';
+import { authService } from '../../../src/auth/application/auth.service';
 
 describe('Auth Validation', () => {
   const app = doBeforeTestsWithMongoMemoryServer();
@@ -620,9 +621,11 @@ describe('Auth Validation', () => {
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUserResult: Result<{ createdUserId: string }> = await usersService.create(createUserData, true);
+    const createdUserId: string = createdUserResult.data.createdUserId;
 
-    const createdUserResult: Result<{ createdUserId: string }> = await usersService.create(
-      createUserData,
+    await authService.createEmailConfirmation(
+      createdUserId,
       expiredUserEmailConfirmationData.confirmationCode,
       expiredUserEmailConfirmationData.expirationDate
     );
@@ -634,7 +637,7 @@ describe('Auth Validation', () => {
       HttpStatuses.BadRequest_400
     );
 
-    const notConfirmedUserDB: UserDBType | null = await usersRepository.findById(createdUserResult.data.createdUserId);
+    const notConfirmedUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
     expect(notConfirmedUserDB?.isConfirmed).toBeFalsy();
     expect(confirmUserByCodeResponse.errorsMessages[0].field).toBe('code');
     expect(confirmUserByCodeResponse.errorsMessages[0].message).toBe('Confirmation code is expired');

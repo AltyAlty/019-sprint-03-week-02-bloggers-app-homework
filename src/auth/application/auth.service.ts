@@ -73,21 +73,10 @@ export const authService = {
     const refreshTokenExpDate: Date = new Date(refreshTokenExp * 1000);
     /*Просим репозиторий "authRepository" добавить сессию в БД.*/
     await authRepository.createSession(userId, deviceId, deviceName, ip, refreshTokenIatDate, refreshTokenExpDate);
-
     /*Просим сервис "securityDevicesService" добавить устройство пользователя.*/
-    await securityDevicesService.create({
-      deviceId,
-      title: deviceName,
-      ip,
-      lastActiveDate: refreshTokenIatDate,
-    });
-
+    await securityDevicesService.create({ deviceId, title: deviceName, ip, lastActiveDate: refreshTokenIatDate });
     /*Возвращаем ResultObject с AT и RT.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { accessToken, refreshToken },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { accessToken, refreshToken }, extensions: [] };
   },
 
   /*Метод для регистрации пользователя. Второй параметр для использования в тестах.*/
@@ -99,16 +88,12 @@ export const authService = {
     const newUserConfirmationCode: string = randomUUID();
     /*Генерируем дату истечения кода подтверждения регистрации пользователя.*/
     const newUserExpirationDate: Date = add(new Date(), SETTINGS.DEFAULT_CODE_EXPIRATION_TIME);
-
     /*Просим сервис "usersService" создать пользователя.*/
-    const createUserResult: Result<{ createdUserId: string }> = await usersService.create(
-      dto,
-      newUserConfirmationCode,
-      newUserExpirationDate
-    );
-
+    const createUserResult: Result<{ createdUserId: string }> = await usersService.create(dto, true);
     /*Получаем ID созданного пользователя.*/
     const createdUserId: string = createUserResult.data.createdUserId;
+    /*Просим сервис "authService" создать данные о подтверждении регистрации пользователя.*/
+    await this.createEmailConfirmation(createdUserId, newUserConfirmationCode, newUserExpirationDate);
 
     /*Просим адаптер "nodemailerAdapter" отправить письмо о подтверждении регистрации пользователя.*/
     emailAdapter
@@ -116,11 +101,7 @@ export const authService = {
       .catch(error => console.error('Failed to send a confirmation email: ', error));
 
     /*Если письмо было успешно отправлено, то возвращаем ResultObject с информацией об этом.*/
-    return {
-      status: ResultStatuses.Created,
-      data: { createdUserId },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Created, data: { createdUserId }, extensions: [] };
   },
 
   /*Метод для перевыпуска пары AT/RT.*/
@@ -176,7 +157,6 @@ export const authService = {
     const { iat: refreshTokenIat, exp: refreshTokenExp }: { iat: number; exp: number } = refreshTokenPayload;
     const refreshTokenIatDate: Date = new Date(refreshTokenIat * 1000);
     const refreshTokenExpDate: Date = new Date(refreshTokenExp * 1000);
-
     /*Просим репозиторий "authRepository" изменить сессию по дате создания RT в БД.*/
     await authRepository.updateSessionByIat(currentRefreshTokenIatDate, refreshTokenIatDate, refreshTokenExpDate, ip);
 
@@ -189,42 +169,26 @@ export const authService = {
 
     /*Если изменение устройства пользователя не прошло успешно, то возвращаем ResultObject с информацией об этом.*/
     if (updatedSecurityDeviceResult.status !== ResultStatuses.NoContent) return updatedSecurityDeviceResult as Result;
-
     /*Если изменение устройства пользователя прошло успешно, то возвращаем ResultObject с созданными AT и RT.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { accessToken, refreshToken },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { accessToken, refreshToken }, extensions: [] };
   },
 
   /*Метод для создания данных о подтверждении регистрации пользователя.*/
   async createEmailConfirmation(userId: string, confirmationCode: string, expirationDate: Date): Promise<Result<{}>> {
     /*Просим репозиторий "authRepository" создать данные о подтверждении регистрации пользователя в БД.*/
     await authRepository.createEmailConfirmation(userId, confirmationCode, expirationDate);
-
     /*Возвращаем ResultObject с информацией о создании данных о подтверждении регистрации пользователя.*/
-    return {
-      status: ResultStatuses.Created,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.Created, data: {}, extensions: [] };
   },
 
   /*Метод для поиска сессий по ID пользователя.*/
   async findAllSessionsByUserId(userId: string): Promise<Result<{ sessionListOutput: SessionListType }>> {
     /*Просим репозиторий "authRepository" найти сессии по ID пользователя в БД.*/
     const sessionsDB: SessionDBType[] = await authRepository.findAllSessionsByUserId(userId);
-
     /*Преобразовываем сессии из БД в подготовленные для работы внутри приложения сессии.*/
     const sessionListOutput: SessionListType = mapToSessionList(sessionsDB);
-
     /*Возвращаем ResultObject с преобразованным сессиями.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { sessionListOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { sessionListOutput }, extensions: [] };
   },
 
   /*Метод для поиска данных о подтверждении регистрации пользователя по коду подтверждения.*/
@@ -250,13 +214,8 @@ export const authService = {
     регистрации пользователя из БД в подготовленные для работы внутри приложения данные о подтверждении регистрации
     пользователя.*/
     const emailConfirmationOutput: EmailConfirmationType = mapToEmailConfirmation(emailConfirmationDB);
-
     /*Возвращаем ResultObject с преобразованными данными о подтверждении регистрации пользователя.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { emailConfirmationOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { emailConfirmationOutput }, extensions: [] };
   },
 
   /*Метод для повторной отправки письма для подтверждения регистрации пользователя. Второй параметр для использования в
@@ -298,11 +257,7 @@ export const authService = {
       .catch(error => console.error('Failed to resend a confirmation email: ', error));
 
     /*Если письмо было успешно отправлено, то возвращаем ResultObject с информацией об этом.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для изменения данных о подтверждении регистрации пользователя по ID пользователя.*/
@@ -321,16 +276,9 @@ export const authService = {
 
     /*Если данные о подтверждении регистрации пользователя не были найдены, то просим сервис "authService" создать
     данные о подтверждении регистрации пользователя.*/
-    if (updatedEmailConfirmationCount < 1) {
-      await this.createEmailConfirmation(userId, confirmationCode, expirationDate);
-    }
-
+    if (updatedEmailConfirmationCount < 1) await this.createEmailConfirmation(userId, confirmationCode, expirationDate);
     /*Возвращаем ResultObject с информацией об изменении данных о подтверждении регистрации пользователя.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для отзыва сессии.*/
@@ -354,13 +302,8 @@ export const authService = {
     const refreshTokenIatDate: Date = new Date(refreshTokenIat * 1000);
     /*Просим репозиторий "authRepository" удалить сессию по дате создания RT в БД.*/
     await authRepository.deleteSessionByIat(refreshTokenIatDate);
-
     /*Возвращаем ResultObject с информацией об отзыве сессии.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для отзыва всех сессий пользователя, кроме текущей.*/
@@ -369,13 +312,8 @@ export const authService = {
     await authRepository.deleteSessionsExceptCurrentDevice(userId, deviceId);
     /*Просим сервис "securityDevicesService" удалить все устройства пользователя, кроме текущего.*/
     await securityDevicesService.deleteAllExceptCurrentDevice(deviceId);
-
     /*Возвращаем ResultObject с информацией об отзыве сессий.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для отзыва сессии по ID пользователя и ID устройства пользователя.*/
@@ -413,13 +351,8 @@ export const authService = {
     await authRepository.deleteSessionByUserIdAndDeviceId(userId, deviceId);
     /*Просим сервис "securityDevicesService" удалить устройство пользователя по ID устройства.*/
     await securityDevicesService.deleteById(deviceId);
-
     /*Возвращаем ResultObject с информацией об отзыве сессии.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для удаления данных о подтверждении регистрации пользователя по ID пользователя.*/
@@ -427,13 +360,8 @@ export const authService = {
     /*Просим репозиторий "authRepository" удалить данные о подтверждении регистрации пользователя по ID пользователя в
     БД.*/
     await authRepository.deleteEmailConfirmationByUserId(userId);
-
     /*Возвращаем ResultObject с информацией об удалении данных о подтверждении регистрации пользователя .*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для проверки подлинности логина/email и пароля пользователя.*/

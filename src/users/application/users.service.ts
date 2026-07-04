@@ -14,11 +14,7 @@ import { EmailConfirmationType } from '../../auth/application/types/email-сonfi
 /*Сервис для работы с пользователями.*/
 export const usersService = {
   /*Метод для добавления пользователя.*/
-  async create(
-    dto: CreateUserInputDTO,
-    confirmationCode?: string,
-    expirationDate?: Date
-  ): Promise<Result<{ createdUserId: string }>> {
+  async create(dto: CreateUserInputDTO, isUserRegistering?: boolean): Promise<Result<{ createdUserId: string }>> {
     /*Создаем переменные на основе параметра "dto" при помощи деструктуризации.*/
     const { login, password, email }: { login: string; password: string; email: string } = dto;
     /*Просим адаптер "argon2Adapter" сгенерировать хеш для пароля.*/
@@ -30,24 +26,13 @@ export const usersService = {
       email,
       passwordHash,
       createdAt: new Date(),
-      isConfirmed: !confirmationCode,
+      isConfirmed: !isUserRegistering,
     };
 
     /*Просим репозиторий "usersRepository" создать нового пользователя в БД.*/
     const createdUserId: string = await usersRepository.create(newUser);
-
-    /*Если пользователь регистрируется, то просим сервис "authService" создать данные о подтверждении регистрации
-    пользователя.*/
-    if (confirmationCode && expirationDate) {
-      await authService.createEmailConfirmation(createdUserId, confirmationCode, expirationDate);
-    }
-
     /*Возвращаем ResultObject с ID пользователя.*/
-    return {
-      status: ResultStatuses.Created,
-      data: { createdUserId },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Created, data: { createdUserId }, extensions: [] };
   },
 
   /*Метод для поиска пользователя по ID.*/
@@ -67,13 +52,8 @@ export const usersService = {
 
     /*Если пользователь был найден, то преобразовываем пользователя из БД в подготовленного для отправки пользователя.*/
     const userOutput: UserOutputDTO = mapToUserOutputDTO(userDB);
-
     /*Возвращаем ResultObject с преобразованным пользователем.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { userOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { userOutput }, extensions: [] };
   },
 
   /*Метод для поиска пользователя по логину/email.*/
@@ -122,7 +102,6 @@ export const usersService = {
     /*Если данные о подтверждении регистрации пользователя не были найдены, то возвращаем ResultObject с информацией об
     этом.*/
     if (emailConfirmationResult.status !== ResultStatuses.Ok) return emailConfirmationResult as Result;
-
     /*Если данные о подтверждении регистрации пользователя были найдены, то получаем ID пользователя.*/
     const userId: string = emailConfirmationResult.data!.emailConfirmationOutput.userId;
     /*Просим репозиторий "usersRepository" подтвердить регистрацию пользователя по ID пользователя в БД.*/
@@ -141,13 +120,8 @@ export const usersService = {
     /*Если регистрация пользователя была подтверждена, то просим сервис "authService" удалить данные о подтверждении
     регистрации пользователя.*/
     await authService.deleteEmailConfirmationByUserId(userId);
-
     /*Возвращаем ResultObject c информацией о подтверждении регистрации пользователя.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для удаления пользователя по ID.*/
@@ -168,10 +142,6 @@ export const usersService = {
     }
 
     /*Если пользователь был удален, то возвращаем ResultObject с информацией об этом.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 };

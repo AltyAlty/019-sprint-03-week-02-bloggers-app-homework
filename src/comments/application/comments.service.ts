@@ -37,13 +37,8 @@ export const commentsService = {
 
     /*Просим репозиторий "commentsRepository" создать комментарий в БД.*/
     const createdCommentId: string = await commentsRepository.create(newComment);
-
     /*Возвращаем ResultObject с ID созданного комментария.*/
-    return {
-      status: ResultStatuses.Created,
-      data: { createdCommentId },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Created, data: { createdCommentId }, extensions: [] };
   },
 
   /*Метод для изменения комментария по ID.*/
@@ -77,11 +72,7 @@ export const commentsService = {
     await commentsRepository.updateById(id, dto);
 
     /*Возвращаем ResultObject с информацией об изменении комментария.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для удаления комментария по ID.*/
@@ -113,13 +104,8 @@ export const commentsService = {
     /*Если пользователь является автором комментария, то просим репозиторий "commentsRepository" удалить комментарий по
     ID в БД.*/
     await commentsRepository.deleteById(id);
-
     /*Возвращаем ResultObject с информацией об удалении комментария.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: {},
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
   /*Метод для удаления комментариев по ID поста.*/
@@ -130,13 +116,8 @@ export const commentsService = {
     if (postResult.status !== ResultStatuses.Ok) return postResult as Result;
     /*Если пост был найден, то просим репозиторий "commentsRepository" удалить комментарии по ID поста в БД.*/
     const deletedCommentsCount: number = await commentsRepository.deleteAllByPostId(postId);
-
     /*Возвращаем ResultObject с информацией об удалении комментариев.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: { deletedCommentsCount },
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: { deletedCommentsCount }, extensions: [] };
   },
 
   /*Метод для удаления комментариев по ID пользователя.*/
@@ -148,25 +129,15 @@ export const commentsService = {
     /*Если пользователь был найден, то просим репозиторий "commentsRepository" удалить комментарии по ID пользователя в
     БД.*/
     const deletedCommentsCount: number = await commentsRepository.deleteAllByUserId(userId);
-
     /*Возвращаем ResultObject с информацией об удалении комментариев.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: { deletedCommentsCount },
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: { deletedCommentsCount }, extensions: [] };
   },
 
   /*Метод для удаления комментариев по ID постов.*/
   async deleteAllByPostIds(postIds: string[]): Promise<Result<{ deletedCommentsCount: number } | null>> {
     /*Просим репозиторий "commentsRepository" удалить комментарии по ID постов в БД.*/
     const deletedCommentsCount: number = await commentsRepository.deleteAllByPostIds(postIds);
-
     /*Возвращаем ResultObject с информацией об удалении комментариев.*/
-    return {
-      status: ResultStatuses.NoContent,
-      data: { deletedCommentsCount },
-      extensions: [],
-    };
+    return { status: ResultStatuses.NoContent, data: { deletedCommentsCount }, extensions: [] };
   },
 };

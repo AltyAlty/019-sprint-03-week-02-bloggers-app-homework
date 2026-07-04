@@ -20,10 +20,8 @@ export const securityDevicesRepository = {
   async findById(id: string): Promise<SecurityDeviceDBType | null> {
     /*Просим коллекцию "securityDevicesCollection" найти устройство пользователя по ID в БД.*/
     const securityDevice: SecurityDeviceDBType | null = await db.securityDevicesCollection.findOne({ deviceId: id });
-    /*Если устройство пользователя не было найдено, то возвращаем null.*/
-    if (!securityDevice) return null;
-    /*Если устройство пользователя было найдено, то возвращаем его.*/
-    return securityDevice;
+    /*Если устройство пользователя было найдено, то возвращаем его, иначе возвращаем null.*/
+    return securityDevice ?? null;
   },
 
   /*Метод для изменения устройства пользователя по ID в БД.*/

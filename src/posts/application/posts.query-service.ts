@@ -29,13 +29,8 @@ export const postsQueryService = {
 
     /*Если пост был найден, то преобразовываем пост из БД в подготовленный для отправки клиенту пост.*/
     const postOutput: PostOutputDTO = mapToPostOutputDTO(postDB);
-
     /*Возвращаем ResultObject с преобразованным постом.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { postOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { postOutput }, extensions: [] };
   },
 
   /*Метод для поиска постов.*/
@@ -65,10 +60,6 @@ export const postsQueryService = {
     });
 
     /*Возвращаем ResultObject с преобразованными для пагинации постами.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { paginatedPostListOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { paginatedPostListOutput }, extensions: [] };
   },
 };

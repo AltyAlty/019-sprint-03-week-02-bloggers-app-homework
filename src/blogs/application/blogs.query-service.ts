@@ -27,13 +27,8 @@ export const blogsQueryService = {
 
     /*Если блог был найден, то преобразовываем блог из БД в подготовленный для отправки клиенту блог.*/
     const blogOutput: BlogOutputDTO = mapToBlogOutputDTO(blogDB);
-
     /*Возвращаем ResultObject с преобразованным блогом.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { blogOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { blogOutput }, extensions: [] };
   },
 
   /*Метод для поиска блогов.*/
@@ -52,10 +47,6 @@ export const blogsQueryService = {
     });
 
     /*Возвращаем ResultObject с преобразованными для пагинации блогами.*/
-    return {
-      status: ResultStatuses.Ok,
-      data: { paginatedBlogListOutput },
-      extensions: [],
-    };
+    return { status: ResultStatuses.Ok, data: { paginatedBlogListOutput }, extensions: [] };
   },
 };

@@ -12,10 +12,8 @@ export const blogsQueryRepository = {
   async findById(id: string): Promise<BlogDBType | null> {
     /*Просим коллекцию "blogsCollection" найти блог по ID в БД.*/
     const blog: BlogDBType | null = await db.blogsCollection.findOne({ _id: new ObjectId(id) });
-    /*Если блог не был найден, то возвращаем null.*/
-    if (!blog) return null;
-    /*Если блог был найден, то возвращаем его.*/
-    return blog;
+    /*Если блог был найден, то возвращаем его, иначе возвращаем null.*/
+    return blog ?? null;
   },
 
   /*Метод для поиска блогов в БД.*/
