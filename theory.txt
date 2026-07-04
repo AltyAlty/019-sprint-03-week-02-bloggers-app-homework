@@ -1,4 +1,4 @@
-Урок: - https://github.com/it-incubator/ed-back-12-lesson/tree/lesson-2
+Урок: https://github.com/it-incubator/ed-back-12-lesson/tree/lesson-2
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -20,11 +20,16 @@ pnpm add -D typescript @types/express jest ts-jest @types/jest @types/node super
 15. Установка типов для jsonwebtoken: pnpm add -D @types/jsonwebtoken
 16. Установка nodemailer: pnpm add nodemailer
 17. Установка типов для nodemailer: pnpm add -D @types/nodemailer
-18. Установка MongoDB Memory Server и типов для него: pnpm add -D mongodb-memory-server @types/mongodb-memory-server
+18. Установка MongoDB Memory Server и типов для него (уже не нужны): pnpm add -D mongodb-memory-server @types/mongodb-memory-server
 19. Установка date-fns: pnpm add date-fns
 20. Установка ts-node: pnpm add -D ts-node
 21. Установка cookie-parser: pnpm add cookie-parser
 22. Установка типов для cookie-parser: pnpm add -D @types/cookie-parser
+23. Установка cors: pnpm add cors
+24. Установка типов для cors: pnpm add -D @types/cors
+25. Установка InversifyJS: pnpm add inversify
+26. Установка reflect-metadata: pnpm add reflect-metadata
+27. Установка Mongoose: pnpm add mongoose
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -49,6 +54,9 @@ pnpm add -D typescript @types/express jest ts-jest @types/jest @types/node super
 3. Корнем проекта для этого конфига становится папка проекта (где лежит tsconfig). Это позволяет включать и папку "src",
 и папку "__tests__", даже если они на одном уровне, и убирает конфликт вида “файл вне rootDir”.
 4. В тестовый проект входят весь код приложения из папки "src" и все тесты из папки "__tests__".
+5. Для работы пакета reflect-metadata включены параметры "Experimental Decorators" и "Emit Decorator Metadata":
+"experimentalDecorators": true,
+"emitDecoratorMetadata": true,
 
 Файл "eslint.config.mjs" создан вручную. Правила в этом файле:
 1. Игнорирует папки "node_modules" и "dist".
@@ -183,6 +191,21 @@ cookie-parser - это библиотека, предоставляющая midd
 3. Расширять объект "res" методом "cookie()" для упрощения установки cookies в ответе.
 4. Опционально включать поддержку подписанных cookies, передавая секретную строку, которая присваивает значение объекту
 "req.secret", чтобы его могли использовать другие промежуточные обработчики.
+
+cors - это пакет в виде middleware для Express, добавляющий CORS-заголовки, тем самым разрешая кросс-доменные запросы из
+браузеров.
+
+InversifyJS - это фреймворк в виде IoC-контейнера для внедрения зависимостей в TypeScript/JavaScript, помогая управлять
+созданием и связыванием классов. Работает в связке с пакетом reflect-metadata.
+
+reflect-metadata - пакет, предоставляющий полифилл для декораторов, добавляющий возможность сохранять метаданные о типах
+параметров, необходим для работы inversify и других DI-библиотек. Должен быть импортирован один раз в точке входа.
+
+Mongoose - это ODM-библиотека (Object Data Modelling), которая занимается преобразованием документов из MongoDB в
+объекты JavaScript. Mongoose используется как обертка над драйвером MongoDB. Mongoose предоставляет более удобный API
+для работы с Mongo БД. Mongoose позволяет определять схемы для MongoDB, для контроля данных в Mongo БД. Схемы это аналог
+типов из TypeScript. При создании схем для MongoDB не нужно указывать свойство "_id". Вместе со схемой нужно
+использовать модели - объекты, через которые идет взаимодействие с Mongo БД.
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -445,7 +468,7 @@ MySQL, Microsoft SQL Server, Oracle, SQLite, IBM Db2.
 2. Документные: данные лежат в документах, похожих на JSON и не имеющих обязательных строгих связей между собой.
 Примеры: MongoDB, Amazon DocumentDB, Couchbase, CouchDB.
 
-3. Key–value (ключ–значение): данные лежат в виде словарей. Часто используются для дополнительных задач, так как не
+3. Key-value (ключ-значение): данные лежат в виде словарей. Часто используются для дополнительных задач, так как не
 удобны для сложных запросов. Примеры: Redis, Amazon DynamoDB, Riak, Memcached, KeyDB.
 
 4. Колоночные (columnar): данные распределены по столбцам. Хорошо подходят под горизонтальное масштабирование, работу с
@@ -1209,6 +1232,10 @@ function isNumber(value: string | number): value is number {
 4. readonly: делает поле доступным только для чтения.
 
 В TS нельзя комбинировать символ "#" с модификаторами доступа к полям класса, кроме readonly.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Метод "lean()" в Mongoose возвращает "обычные" JavaScript объекты. Этот метод можно уточнять.
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 

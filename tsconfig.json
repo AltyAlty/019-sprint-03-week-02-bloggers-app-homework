@@ -9,7 +9,9 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "types": ["jest", "node", "express"]
+    "types": ["jest", "node", "express"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["src/**/*"]
   // "exclude": ["__tests__", "dist", "node_modules"]
