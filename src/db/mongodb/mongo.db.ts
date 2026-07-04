@@ -8,6 +8,7 @@ import { SessionType } from '../../auth/application/types/session.type';
 import { SecurityDeviceType } from '../../security-devices/application/types/security-device.type';
 import { RequestRateLimitLogType } from '../../auth/application/types/request-rate-limit-log.type';
 import { EmailConfirmationType } from '../../auth/application/types/email-сonfirmation.type';
+import { RecoveryCodeType } from '../../auth/application/types/recovery-code.type';
 
 /*Объект для работы с MongoDB.*/
 export const db = {
@@ -26,6 +27,7 @@ export const db = {
   sessionsCollection: {} as Collection<SessionType>,
   securityDevicesCollection: {} as Collection<SecurityDeviceType>,
   requestRateLimitLogsCollection: {} as Collection<RequestRateLimitLogType>,
+  recoveryPasswordCodesCollection: {} as Collection<RecoveryCodeType>,
 
   /*Метод для подключения к серверу MongoDB.*/
   async runDB(url: string, dbName: string): Promise<void> {
@@ -50,7 +52,7 @@ export const db = {
 
       await this.emailConfirmationsCollection.createIndex(
         { expirationDate: 1 },
-        { expireAfterSeconds: SETTINGS.DEFAULT_CODE_EXPIRATION_TIME_IN_DB }
+        { expireAfterSeconds: SETTINGS.COMPLETE_REGISTRATION_CODE_EXPIRATION_TIME_IN_DB_IN_SECONDS }
       );
 
       this.sessionsCollection = this.db.collection<SessionType>(SETTINGS.SESSIONS_COLLECTION_NAME);
@@ -66,11 +68,20 @@ export const db = {
 
       await this.requestRateLimitLogsCollection.createIndex(
         { timestamp: 1 },
-        { expireAfterSeconds: Number(SETTINGS.REQUEST_RATE_LIMIT_LOG_EXPIRATION_TIME_IN_SECONDS) }
+        { expireAfterSeconds: SETTINGS.REQUEST_RATE_LIMIT_LOG_EXPIRATION_TIME_IN_SECONDS }
       );
 
       /*Используем составной индекс, чтобы ускорить работу метода "countDocuments()".*/
       await this.requestRateLimitLogsCollection.createIndex({ ip: 1, url: 1, timestamp: -1 });
+
+      this.recoveryPasswordCodesCollection = this.db.collection<RecoveryCodeType>(
+        SETTINGS.RECOVERY_PASSWORD_CODES_COLLECTION_NAME
+      );
+
+      await this.recoveryPasswordCodesCollection.createIndex(
+        { expirationDate: 1 },
+        { expireAfterSeconds: SETTINGS.PASSWORD_RECOVERY_CODE_EXPIRATION_TIME_IN_DB_IN_SECONDS }
+      );
     } catch (error: unknown) {
       if (this.client) await this.client.close();
       throw new Error(`❌ Cannot connect to a MongoDB server: ${error}`);

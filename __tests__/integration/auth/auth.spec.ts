@@ -154,7 +154,7 @@ describe('Auth', () => {
 
     expect(mockEmailAdapter.sendMail).toHaveBeenCalledWith(
       createUserData.email,
-      'Resending Complete Registration Mail',
+      'Resending Complete Registration Email',
       expect.stringMatching(validUUIDRegExp),
       emailExamples.completeRegistrationEmail
     );
@@ -202,7 +202,7 @@ describe('Auth', () => {
 
     expect(mockEmailAdapter.sendMail).toHaveBeenCalledWith(
       createUserData.email,
-      'Resending Complete Registration Mail',
+      'Resending Complete Registration Email',
       expect.stringMatching(validUUIDRegExp),
       emailExamples.completeRegistrationEmail
     );

@@ -12,13 +12,11 @@ export const mapToPaginatedUserListOutputDTO = (
     page: meta.pageNumber,
     pageSize: meta.pageSize,
     totalCount: meta.totalCount,
-    items: users.map(
-      (user): UserOutputDTO => ({
-        id: user._id.toString(),
-        login: user.login,
-        email: user.email,
-        createdAt: user.createdAt,
-      })
-    ),
+    items: users.map((user): UserOutputDTO => ({
+      id: user._id.toString(),
+      login: user.login,
+      email: user.email,
+      createdAt: user.createdAt,
+    })),
   };
 };

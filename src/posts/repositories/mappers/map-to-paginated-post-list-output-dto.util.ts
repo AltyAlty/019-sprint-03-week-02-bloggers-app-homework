@@ -12,16 +12,14 @@ export const mapToPaginatedPostListOutputDTO = (
     page: meta.pageNumber,
     pageSize: meta.pageSize,
     totalCount: meta.totalCount,
-    items: posts.map(
-      (post): PostOutputDTO => ({
-        id: post._id.toString(),
-        title: post.title,
-        shortDescription: post.shortDescription,
-        content: post.content,
-        blogId: post.blogId,
-        blogName: post.blogName,
-        createdAt: post.createdAt,
-      })
-    ),
+    items: posts.map((post): PostOutputDTO => ({
+      id: post._id.toString(),
+      title: post.title,
+      shortDescription: post.shortDescription,
+      content: post.content,
+      blogId: post.blogId,
+      blogName: post.blogName,
+      createdAt: post.createdAt,
+    })),
   };
 };

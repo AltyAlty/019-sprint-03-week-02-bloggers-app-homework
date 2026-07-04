@@ -12,13 +12,11 @@ export const mapToPaginatedCommentListOutputDTO = (
     page: meta.pageNumber,
     pageSize: meta.pageSize,
     totalCount: meta.totalCount,
-    items: comments.map(
-      (comment): CommentOutputDTO => ({
-        id: comment._id.toString(),
-        content: comment.content,
-        commentatorInfo: comment.commentatorInfo,
-        createdAt: comment.createdAt,
-      })
-    ),
+    items: comments.map((comment): CommentOutputDTO => ({
+      id: comment._id.toString(),
+      content: comment.content,
+      commentatorInfo: comment.commentatorInfo,
+      createdAt: comment.createdAt,
+    })),
   };
 };

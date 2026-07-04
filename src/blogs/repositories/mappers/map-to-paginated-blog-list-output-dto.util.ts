@@ -12,15 +12,13 @@ export const mapToPaginatedBlogListOutputDTO = (
     page: meta.pageNumber,
     pageSize: meta.pageSize,
     totalCount: meta.totalCount,
-    items: blogs.map(
-      (blog): BlogOutputDTO => ({
-        id: blog._id.toString(),
-        name: blog.name,
-        description: blog.description,
-        websiteUrl: blog.websiteUrl,
-        createdAt: blog.createdAt,
-        isMembership: blog.isMembership,
-      })
-    ),
+    items: blogs.map((blog): BlogOutputDTO => ({
+      id: blog._id.toString(),
+      name: blog.name,
+      description: blog.description,
+      websiteUrl: blog.websiteUrl,
+      createdAt: blog.createdAt,
+      isMembership: blog.isMembership,
+    })),
   };
 };

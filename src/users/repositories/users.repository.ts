@@ -52,6 +52,18 @@ export const usersRepository = {
     return updateResult.matchedCount;
   },
 
+  /*Метод для изменения хеша для пароля пользователя по ID в БД.*/
+  async updatePasswordHashById(id: string, passwordHash: string): Promise<number> {
+    /*Просим коллекцию "usersCollection" изменить хеш для пароля пользователя по ID в БД.*/
+    const updateResult: UpdateResult = await db.usersCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { passwordHash } }
+    );
+
+    /*Возвращаем количество пользователей, попавших под фильтр.*/
+    return updateResult.matchedCount;
+  },
+
   /*Метод для удаления пользователя по ID в БД.*/
   async deleteById(id: string): Promise<number> {
     /*Просим коллекцию "usersCollection" удалить пользователя по ID в БД.*/

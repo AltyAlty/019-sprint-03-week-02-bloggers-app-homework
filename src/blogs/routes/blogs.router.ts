@@ -6,12 +6,12 @@ import { updateBlogByIdHandler } from './handlers/update-blog-by-id.handler';
 import { deleteBlogByIdHandler } from './handlers/delete-blog-by-id.handler';
 import { blogIdValidation, idValidation } from '../../core/middlewares/validation/params-id-validation.middlewares';
 import { inputValidationResultMiddleware } from '../../core/middlewares/validation/input-validation-result.middleware';
-import { blogCreateInputValidation, blogUpdateInputValidation } from '../validation/blogs-input-validation.middlewares';
+import { createBlogInputValidation, updateBlogInputValidation } from '../validation/blogs-input-validation.middlewares';
 import { basicAuthGuardMiddleware } from '../../auth/middlewares/guard-middlewares/basic-auth.guard-middleware';
 import { paginationValidationMiddleware } from '../../core/middlewares/validation/pagination-validation.middleware';
 import { getPostListByBlogIdHandler } from './handlers/get-post-list-by-blog-id.handler';
 import { BlogSortFieldQueryInputDTO } from './input-dto/query/blog-sort-field-query.input-dto';
-import { postForBlogCreateInputValidation } from '../../posts/validation/posts-input-validation.middlewares';
+import { createPostForBlogInputValidation } from '../../posts/validation/posts-input-validation.middlewares';
 import { createPostForBlogByBlogIdHandler } from './handlers/creat-post-for-blog-by-blog-id.handler';
 import { PostSortFieldQueryInputDTO } from '../../posts/routes/input-dto/query/post-sort-field-query.input-dto';
 import { SETTINGS } from '../../core/settings/settings';
@@ -32,7 +32,7 @@ blogsRouter
   .post(
     SETTINGS.CREATE_BLOG_PATH,
     basicAuthGuardMiddleware,
-    blogCreateInputValidation,
+    createBlogInputValidation,
     inputValidationResultMiddleware,
     createBlogHandler
   )
@@ -49,7 +49,7 @@ blogsRouter
     SETTINGS.CREATE_POST_FOR_BLOG_PATH,
     basicAuthGuardMiddleware,
     blogIdValidation,
-    postForBlogCreateInputValidation,
+    createPostForBlogInputValidation,
     inputValidationResultMiddleware,
     createPostForBlogByBlogIdHandler
   )
@@ -61,7 +61,7 @@ blogsRouter
     SETTINGS.UPDATE_BLOG_BY_ID_PATH,
     basicAuthGuardMiddleware,
     idValidation,
-    blogUpdateInputValidation,
+    updateBlogInputValidation,
     inputValidationResultMiddleware,
     updateBlogByIdHandler
   )

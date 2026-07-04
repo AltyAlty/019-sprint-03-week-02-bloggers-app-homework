@@ -20,6 +20,9 @@ import { ObjectId } from 'mongodb';
 import { EmailConfirmationDBType } from '../repositories/types/email-сonfirmation-db.type';
 import { mapToEmailConfirmation } from '../repositories/mappers/map-to-email-confirmation.util';
 import { EmailConfirmationType } from './types/email-сonfirmation.type';
+import { RecoveryCodeDBType } from '../repositories/types/recovery-code-db.type';
+import { mapToRecoveryCode } from '../repositories/mappers/map-to-recovery-code.util';
+import { RecoveryCodeType } from './types/recovery-code.type';
 
 /*Сервис для работы с аутентификацией и авторизацией.*/
 export const authService = {
@@ -87,7 +90,7 @@ export const authService = {
     /*Генерируем код подтверждения регистрации пользователя.*/
     const newUserConfirmationCode: string = randomUUID();
     /*Генерируем дату истечения кода подтверждения регистрации пользователя.*/
-    const newUserExpirationDate: Date = add(new Date(), SETTINGS.DEFAULT_CODE_EXPIRATION_TIME);
+    const newUserExpirationDate: Date = add(new Date(), SETTINGS.COMPLETE_REGISTRATION_CODE_EXPIRATION_TIME);
     /*Просим сервис "usersService" создать пользователя.*/
     const createUserResult: Result<{ createdUserId: string }> = await usersService.create(dto, true);
     /*Получаем ID созданного пользователя.*/
@@ -181,6 +184,33 @@ export const authService = {
     return { status: ResultStatuses.Created, data: {}, extensions: [] };
   },
 
+  /*Метод для отправки письма с кодом восстановления пароля пользователя. Второй параметр для использования в тестах.*/
+  async sendRecoveryPasswordCode(email: string, emailAdapter = nodemailerAdapter): Promise<Result<{}>> {
+    /*Просим сервис "usersService" найти пользователя по email.*/
+    const userResult: Result<{
+      userOutputWithIsConfirmedAndPasswordHash: UserOutputDTO & { isConfirmed: boolean; passwordHash: string };
+    } | null> = await usersService.findByLoginOrEmail(email);
+
+    /*Если пользователь не был найден, то возвращаем ResultObject с информацией об этом.*/
+    if (userResult.status !== ResultStatuses.Ok) return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
+    /*Если пользователь был найден, то получаем ID пользователя.*/
+    const userId: string = userResult.data!.userOutputWithIsConfirmedAndPasswordHash.id;
+    /*Генерируем код восстановления пароля пользователя.*/
+    const recoveryCode: string = randomUUID();
+    /*Генерируем дату истечения кода восстановления пароля пользователя.*/
+    const recoveryCodeExpirationDate: Date = add(new Date(), SETTINGS.PASSWORD_RECOVERY_CODE_EXPIRATION_TIME);
+    /*Просим репозиторий "authRepository" создать код восстановления пароля пользователя в БД.*/
+    await authRepository.createRecoveryPasswordCode(userId, recoveryCode, recoveryCodeExpirationDate);
+
+    /*Просим адаптер "nodemailerAdapter" отправить письмо с кодом восстановления пароля пользователя.*/
+    emailAdapter
+      .sendMail(email, 'Recover Password', recoveryCode, emailExamples.passwordRecoveryEmail)
+      .catch(error => console.error('Failed to send a recovery password email: ', error));
+
+    /*Если письмо было успешно отправлено, то возвращаем ResultObject с информацией об этом.*/
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
+  },
+
   /*Метод для поиска сессий по ID пользователя.*/
   async findAllSessionsByUserId(userId: string): Promise<Result<{ sessionListOutput: SessionListType }>> {
     /*Просим репозиторий "authRepository" найти сессии по ID пользователя в БД.*/
@@ -218,13 +248,37 @@ export const authService = {
     return { status: ResultStatuses.Ok, data: { emailConfirmationOutput }, extensions: [] };
   },
 
+  /*Метод для поиска кода восстановления пароля пользователя.*/
+  async findRecoveryPasswordCode(
+    recoveryCode: string
+  ): Promise<Result<{ recoveryCodeOutput: RecoveryCodeType } | null>> {
+    /*Просим репозиторий "authRepository" найти код восстановления пароля пользователя в БД.*/
+    const recoveryCodeDB: RecoveryCodeDBType | null = await authRepository.findRecoveryPasswordCode(recoveryCode);
+
+    /*Если код восстановления пароля пользователя не был найден, то возвращаем ResultObject с информацией об этом.*/
+    if (!recoveryCodeDB) {
+      return {
+        status: ResultStatuses.BadRequest,
+        data: null,
+        errorMessage: 'Bad Request',
+        extensions: [{ field: 'recovery code', message: 'Recovery code is invalid' }],
+      };
+    }
+
+    /*Если код восстановления пароля пользователя был найден, то преобразовываем код восстановления пароля пользователя
+    из БД в подготовленный для работы внутри приложения код восстановления пароля пользователя.*/
+    const recoveryCodeOutput: RecoveryCodeType = mapToRecoveryCode(recoveryCodeDB);
+    /*Возвращаем ResultObject с преобразованным кодом восстановления пароля пользователя.*/
+    return { status: ResultStatuses.Ok, data: { recoveryCodeOutput }, extensions: [] };
+  },
+
   /*Метод для повторной отправки письма для подтверждения регистрации пользователя. Второй параметр для использования в
   тестах.*/
   async resendConfirmationEmail(email: string, emailAdapter = nodemailerAdapter): Promise<Result<{} | null>> {
     /*Генерируем код подтверждения регистрации пользователя.*/
     const newUserConfirmationCode: string = randomUUID();
     /*Генерируем дату истечения кода подтверждения регистрации пользователя.*/
-    const newUserExpirationDate: Date = add(new Date(), SETTINGS.DEFAULT_CODE_EXPIRATION_TIME);
+    const newUserExpirationDate: Date = add(new Date(), SETTINGS.COMPLETE_REGISTRATION_CODE_EXPIRATION_TIME);
 
     /*Просим сервис "usersService" найти пользователя по email.*/
     const userResult: Result<{
@@ -241,7 +295,7 @@ export const authService = {
       };
     }
 
-    /*Если пользователь был найден, то получаем его ID.*/
+    /*Если пользователь был найден, то получаем ID пользователя.*/
     const userId: string = userResult.data!.userOutputWithIsConfirmedAndPasswordHash.id;
     /*Просим сервис "authService" изменить данные о подтверждении регистрации пользователя по ID пользователя.*/
     await this.updateEmailConfirmationByUserId(userId, newUserConfirmationCode, newUserExpirationDate);
@@ -250,7 +304,7 @@ export const authService = {
     emailAdapter
       .sendMail(
         email,
-        'Resending Complete Registration Mail',
+        'Resending Complete Registration Email',
         newUserConfirmationCode,
         emailExamples.completeRegistrationEmail
       )
@@ -355,12 +409,30 @@ export const authService = {
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
+  /*Метод для отзыва всех сессий пользователя по ID пользователя.*/
+  async revokeAllSessionsByUserId(userId: string): Promise<Result<{}>> {
+    /*Просим репозиторий "authRepository" удалить все сессии пользователя по ID пользователя в БД.*/
+    await authRepository.deleteAllSessionsByUserId(userId);
+    /*Просим сервис "securityDevicesService" удалить все устройства пользователя по ID пользователя.*/
+    await securityDevicesService.deleteAllByUserId(userId);
+    /*Возвращаем ResultObject с информацией об отзыве сессий.*/
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
+  },
+
   /*Метод для удаления данных о подтверждении регистрации пользователя по ID пользователя.*/
   async deleteEmailConfirmationByUserId(userId: string): Promise<Result<{}>> {
     /*Просим репозиторий "authRepository" удалить данные о подтверждении регистрации пользователя по ID пользователя в
     БД.*/
     await authRepository.deleteEmailConfirmationByUserId(userId);
-    /*Возвращаем ResultObject с информацией об удалении данных о подтверждении регистрации пользователя .*/
+    /*Возвращаем ResultObject с информацией об удалении данных о подтверждении регистрации пользователя.*/
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
+  },
+
+  /*Метод для удаления кода восстановления пароля пользователя.*/
+  async deleteRecoveryCode(recoveryCode: string): Promise<Result<{}>> {
+    /*Просим репозиторий "authRepository" удалить код восстановления пароля пользователя в БД.*/
+    await authRepository.deleteRecoveryCode(recoveryCode);
+    /*Возвращаем ResultObject с информацией об удалении кода восстановления пароля пользователя.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 

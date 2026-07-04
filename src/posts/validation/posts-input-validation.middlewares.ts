@@ -51,7 +51,7 @@ export const blogIdValidation: ValidationChain = body('blogId')
 
 /*Комбинируем вышеуказанные middlewares в один middleware для использования его при проверке запросов по созданию
 поста.*/
-export const postCreateInputValidation = [
+export const createPostInputValidation = [
   titleValidation,
   shortDescriptionValidation,
   contentValidation,
@@ -60,7 +60,7 @@ export const postCreateInputValidation = [
 
 /*Комбинируем вышеуказанные middlewares в один middleware для использования его при проверке запросов по изменению
 поста.*/
-export const postUpdateInputValidation = [
+export const updatePostInputValidation = [
   titleValidation,
   shortDescriptionValidation,
   contentValidation,
@@ -69,4 +69,4 @@ export const postUpdateInputValidation = [
 
 /*Комбинируем вышеуказанные middlewares в один middleware для использования его при проверке запросов по созданию поста
 в блоге.*/
-export const postForBlogCreateInputValidation = [titleValidation, shortDescriptionValidation, contentValidation];
+export const createPostForBlogInputValidation = [titleValidation, shortDescriptionValidation, contentValidation];

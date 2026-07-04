@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from 'express';
+import cors from 'cors';
 import { HttpStatuses } from './core/types/http-statuses';
 import { setupSwagger } from './core/swagger/setup-swagger';
 import { SETTINGS } from './core/settings/settings';
@@ -13,6 +14,8 @@ import { securityDevicesRouter } from './security-devices/routes/security-device
 
 /*Функция для конфигурирования экземпляров приложения Express.*/
 export const setupApp = async (app: Express): Promise<Express> => {
+  /*Подключаем middleware, разрешающий кросс-доменные запросы.*/
+  app.use(cors());
   /*Подключаем middleware для парсинга JSON в теле запроса.*/
   app.use(express.json());
   /*Подключаем middleware для работы с cookies.*/

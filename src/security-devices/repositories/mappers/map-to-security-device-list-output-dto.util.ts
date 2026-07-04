@@ -7,12 +7,10 @@ import { SecurityDeviceOutputDTO } from '../../routes/output-dto/security-device
 export const mapToSecurityDeviceListOutputDTO = (
   securityDevices: SecurityDeviceDBType[]
 ): SecurityDeviceListOutputDTO => {
-  return securityDevices.map(
-    (securityDevice): SecurityDeviceOutputDTO => ({
-      deviceId: securityDevice.deviceId,
-      title: securityDevice.title,
-      ip: securityDevice.ip,
-      lastActiveDate: securityDevice.lastActiveDate,
-    })
-  );
+  return securityDevices.map((securityDevice): SecurityDeviceOutputDTO => ({
+    deviceId: securityDevice.deviceId,
+    title: securityDevice.title,
+    ip: securityDevice.ip,
+    lastActiveDate: securityDevice.lastActiveDate,
+  }));
 };

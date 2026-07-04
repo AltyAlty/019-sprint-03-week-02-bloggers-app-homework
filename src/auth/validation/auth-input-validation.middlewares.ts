@@ -3,6 +3,7 @@ import { usersRepository } from '../../users/repositories/users.repository';
 import { UserDBType } from '../../users/repositories/types/user-db.type';
 import { EmailConfirmationDBType } from '../repositories/types/email-сonfirmation-db.type';
 import { authRepository } from '../repositories/auth.repository';
+import { RecoveryCodeDBType } from '../repositories/types/recovery-code-db.type';
 
 const loginOrEmailValidation: ValidationChain = body('loginOrEmail')
   .exists()
@@ -23,6 +24,49 @@ const passwordValidation: ValidationChain = body('password')
   .withMessage('Field "password" must not be empty')
   .isLength({ min: 6, max: 20 })
   .withMessage('Field "password" must be between 6 and 20 characters');
+
+export const recoveryPasswordEmailValidation: ValidationChain = body('email')
+  .exists()
+  .withMessage('Field "email" is required')
+  .isString()
+  .withMessage('Field "email" must be a string')
+  .trim()
+  .notEmpty()
+  .withMessage('Field "email" must not be empty')
+  .matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/)
+  .withMessage('Field "email" is invalid')
+  .isEmail()
+  .withMessage('Field "email" is invalid');
+
+const newPasswordValidation: ValidationChain = body('newPassword')
+  .exists()
+  .withMessage('Field "newPassword" is required')
+  .isString()
+  .withMessage('Field "newPassword" must be a string')
+  .trim()
+  .notEmpty()
+  .withMessage('Field "newPassword" must not be empty')
+  .isLength({ min: 6, max: 20 })
+  .withMessage('Field "newPassword" must be between 6 and 20 characters');
+
+const recoveryCodeValidation: ValidationChain = body('recoveryCode')
+  .exists()
+  .withMessage('Field "recoveryCode" is required')
+  .isString()
+  .withMessage('field "recoveryCode" must be a string')
+  .trim()
+  .notEmpty()
+  .withMessage('Field "recoveryCode" must not be empty')
+  .matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+  .withMessage('Field "recoveryCode" is invalid')
+  .custom(async (code: string) => {
+    const recoveryCodeDB: RecoveryCodeDBType | null = await authRepository.findRecoveryPasswordCode(code);
+    if (!recoveryCodeDB) throw new Error('Field "recoveryCode" is invalid');
+    if (recoveryCodeDB.expirationDate <= new Date()) throw new Error('Recovery code is expired');
+    const userDB: UserDBType | null = await usersRepository.findById(recoveryCodeDB.userId);
+    if (!userDB) throw new Error('Field "recoveryCode" is invalid');
+    return true;
+  });
 
 /*Middleware для проверки, что поле "code":
 1. Существует в запросе.
@@ -80,4 +124,8 @@ export const registrationEmailResendingValidation: ValidationChain = body('email
 
 /*Комбинируем вышеуказанные middlewares в один middleware для использования его при проверке запросов по аутентификации
 пользователя.*/
-export const authUserPostInputValidation = [loginOrEmailValidation, passwordValidation];
+export const authUserInputValidation = [loginOrEmailValidation, passwordValidation];
+
+/*Комбинируем вышеуказанные middlewares в один middleware для использования его при проверке запросов по установлению
+нового пароля пользователя по коду восстановления.*/
+export const setNewPasswordByRecoveryCodeInputValidation = [newPasswordValidation, recoveryCodeValidation];

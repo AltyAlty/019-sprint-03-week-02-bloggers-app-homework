@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ExtensionType, Result } from '../../../core/types/result/result.type';
+import { Result } from '../../../core/types/result/result.type';
 import { HttpStatuses } from '../../../core/types/http-statuses';
 import { SecurityDeviceListOutputDTO } from '../output-dto/security-device-list.output-dto';
 import { mapResultCodeToHttpStatus } from '../../../core/utils/result/mappers/map-result-code-to-http-status';
@@ -9,8 +9,8 @@ import { securityDevicesQueryService } from '../../application/security-devices.
 /*Функция-обработчик для GET-запросов по получению устройств пользователя в активных сессиях.*/
 export const getSecurityDeviceListHandler = async (
   req: Request,
-  res: Response<SecurityDeviceListOutputDTO | ExtensionType[]>
-): Promise<void | Response<SecurityDeviceListOutputDTO | ExtensionType[]>> => {
+  res: Response<SecurityDeviceListOutputDTO>
+): Promise<void | Response<SecurityDeviceListOutputDTO>> => {
   try {
     /*Получаем ID пользователя.*/
     const userId: string = req.userId!.id;

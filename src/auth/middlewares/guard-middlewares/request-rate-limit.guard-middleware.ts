@@ -26,14 +26,12 @@ export const requestRateLimitGuardMiddleware = async (
   const countRequestRateLimitLogs: number = await authRepository.countRequestRateLimitLogsByIpAndUrl(
     ip,
     url,
-    Number(SETTINGS.REQUEST_RATE_LIMIT_TIME_IN_SECONDS)
+    SETTINGS.REQUEST_RATE_LIMIT_TIME_IN_SECONDS
   );
 
   /*Если за указанные период превышен лимит запросов по какому-то URL с какого-то IP-адреса, то сообщаем об этом
   клиенту.*/
-  if (countRequestRateLimitLogs >= Number(SETTINGS.REQUEST_RATE_LIMIT))
-    return res.sendStatus(HttpStatuses.TooManyRequest_429);
-
+  if (countRequestRateLimitLogs >= SETTINGS.REQUEST_RATE_LIMIT) return res.sendStatus(HttpStatuses.TooManyRequest_429);
   /*Создаем объект записи для журнала лимитов запросов.*/
   const requestRateLimitLog: RequestRateLimitLogType = { ip, url, timestamp: new Date() };
   /*Просим репозиторий "authRepository" создать запись в журнале лимитов запросов в БД.*/

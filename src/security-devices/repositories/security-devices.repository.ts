@@ -51,4 +51,12 @@ export const securityDevicesRepository = {
     /*Возвращаем количество удаленных устройств пользователя.*/
     return deleteResult.deletedCount;
   },
+
+  /*Метод для удаления всех устройств пользователя по ID пользователя в БД.*/
+  async deleteAllByUserId(userId: string): Promise<number> {
+    /*Просим коллекцию "securityDevicesCollection" удалить все устройства пользователя по ID пользователя в БД.*/
+    const deleteResult: DeleteResult = await db.securityDevicesCollection.deleteMany({ userId });
+    /*Возвращаем количество удаленных устройств пользователя.*/
+    return deleteResult.deletedCount;
+  },
 };

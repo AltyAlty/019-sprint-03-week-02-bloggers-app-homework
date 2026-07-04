@@ -68,4 +68,4 @@ const emailValidation: ValidationChain = body('email')
 
 /*Комбинируем вышеуказанные middlewares в один middleware для использования его для проверки запросов по созданию
 пользователя.*/
-export const userCreateInputValidation = [loginValidation, passwordValidation, emailValidation];
+export const createUserInputValidation = [loginValidation, passwordValidation, emailValidation];

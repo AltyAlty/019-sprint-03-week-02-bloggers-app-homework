@@ -5,6 +5,8 @@ import { SessionDBType } from './types/session-db.type';
 import { RequestRateLimitLogType } from '../application/types/request-rate-limit-log.type';
 import { EmailConfirmationType } from '../application/types/email-сonfirmation.type';
 import { EmailConfirmationDBType } from './types/email-сonfirmation-db.type';
+import { RecoveryCodeType } from '../application/types/recovery-code.type';
+import { RecoveryCodeDBType } from './types/recovery-code-db.type';
 
 /*Репозиторий для работы с аутентификацией и авторизацией в БД.*/
 export const authRepository = {
@@ -65,6 +67,19 @@ export const authRepository = {
     });
   },
 
+  /*Метод для создания кода восстановления пароля пользователя в БД.*/
+  async createRecoveryPasswordCode(userId: string, recoveryCode: string, expirationDate: Date): Promise<string> {
+    /*Просим коллекцию "recoveryPasswordCodesCollection" создать код восстановления пароля пользователя в БД.*/
+    const insertResult: InsertOneResult<RecoveryCodeType> = await db.recoveryPasswordCodesCollection.insertOne({
+      userId,
+      recoveryCode,
+      expirationDate,
+    });
+
+    /*Возвращаем ID созданного кода восстановления пароля пользователя.*/
+    return insertResult.insertedId.toString();
+  },
+
   /*Метод для поиска сессии по ID пользователя и ID устройства пользователя в БД.*/
   async findSessionByUserIdAndDeviceId(userId: string, deviceId: string): Promise<SessionDBType | null> {
     /*Просим коллекцию "sessionsCollection" найти сессию по ID устройства пользователя в БД.*/
@@ -112,6 +127,17 @@ export const authRepository = {
     return emailConfirmation ?? null;
   },
 
+  /*Метод для поиска кода восстановления пароля пользователя в БД.*/
+  async findRecoveryPasswordCode(code: string): Promise<RecoveryCodeDBType | null> {
+    /*Просим коллекцию "recoveryPasswordCodesCollection" найти код восстановления пароля пользователя в БД.*/
+    const recoveryCode: RecoveryCodeDBType | null = await db.recoveryPasswordCodesCollection.findOne({
+      recoveryCode: code,
+    });
+
+    /*Если код восстановления пароля пользователя был найден, то возвращаем его, иначе возвращаем null.*/
+    return recoveryCode ?? null;
+  },
+
   /*Метод для изменения сессии по дате создания RT в БД.*/
   async updateSessionByIat(currentIat: Date, iat: Date, exp: Date, ip: string): Promise<number> {
     /*Просим коллекцию "sessionsCollection" изменить сессию по дате создания RT в БД.*/
@@ -157,7 +183,7 @@ export const authRepository = {
     return deleteResult.deletedCount;
   },
 
-  /*Метод для отзыва всех сессий пользователя, кроме текущей, в БД.*/
+  /*Метод для удаления всех сессий пользователя, кроме текущей, в БД.*/
   async deleteSessionsExceptCurrentDevice(userId: string, deviceId: string): Promise<number> {
     /*Просим коллекцию "sessionsCollection" удалить все сессии пользователя, кроме текущей, в БД.*/
     const deleteResult: DeleteResult = await db.sessionsCollection.deleteMany({
@@ -169,12 +195,28 @@ export const authRepository = {
     return deleteResult.deletedCount;
   },
 
+  /*Метод для удаления всех сессий пользователя по ID пользователя в БД.*/
+  async deleteAllSessionsByUserId(userId: string): Promise<number> {
+    /*Просим коллекцию "sessionsCollection" удалить все сессии пользователя по ID пользователя в БД.*/
+    const deleteResult: DeleteResult = await db.sessionsCollection.deleteMany({ userId });
+    /*Возвращаем количество удаленных сессий.*/
+    return deleteResult.deletedCount;
+  },
+
   /*Метод для удаления данных о подтверждении регистрации пользователя по ID пользователя в БД.*/
   async deleteEmailConfirmationByUserId(userId: string): Promise<number> {
     /*Просим коллекцию "emailConfirmationsCollection" удалить данные о подтверждении регистрации пользователя по ID
     пользователя в БД.*/
     const deleteResult: DeleteResult = await db.emailConfirmationsCollection.deleteOne({ userId });
     /*Возвращаем количество удаленных данных о подтверждении регистрации пользователя.*/
+    return deleteResult.deletedCount;
+  },
+
+  /*Метод для удаления кода восстановления пароля пользователя в БД.*/
+  async deleteRecoveryCode(recoveryCode: string): Promise<number> {
+    /*Просим коллекцию "recoveryPasswordCodesCollection" удалить код восстановления пароля пользователя в БД.*/
+    const deleteResult: DeleteResult = await db.recoveryPasswordCodesCollection.deleteOne({ recoveryCode });
+    /*Возвращаем количество удаленных кодов восстановления пароля пользователя.*/
     return deleteResult.deletedCount;
   },
 };

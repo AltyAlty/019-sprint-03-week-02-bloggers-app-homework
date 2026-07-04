@@ -72,4 +72,12 @@ export const securityDevicesService = {
     /*Возвращаем ResultObject с информацией об удалении устройств пользователя.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
+
+  /*Метод для удаления всех устройств пользователя по ID пользователя.*/
+  async deleteAllByUserId(userId: string): Promise<Result<{}>> {
+    /*Просим репозиторий "securityDevicesRepository" удалить все устройства пользователя по ID пользователя в БД.*/
+    await securityDevicesRepository.deleteAllByUserId(userId);
+    /*Возвращаем ResultObject с информацией об удалении устройств пользователя.*/
+    return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
+  },
 };

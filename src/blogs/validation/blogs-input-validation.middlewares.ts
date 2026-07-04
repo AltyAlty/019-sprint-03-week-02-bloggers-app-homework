@@ -49,7 +49,7 @@ const websiteUrlValidation: ValidationChain = body('websiteUrl')
 
 /*Комбинируем вышеуказанные middlewares в один middleware для использования его при проверке запросов по созданию
 блога.*/
-export const blogCreateInputValidation = [nameValidation, descriptionValidation, websiteUrlValidation];
+export const createBlogInputValidation = [nameValidation, descriptionValidation, websiteUrlValidation];
 /*Комбинируем вышеуказанные middlewares в один middleware для использования его при проверке запросов по изменению
 блога.*/
-export const blogUpdateInputValidation = [nameValidation, descriptionValidation, websiteUrlValidation];
+export const updateBlogInputValidation = [nameValidation, descriptionValidation, websiteUrlValidation];

@@ -7,7 +7,7 @@ import { getUserListHandler } from './handlers/get-user-list.handler';
 import { UserSortFieldQueryInputDTO } from './input-dto/query/user-sort-field-query.input-dto';
 import { createUserHandler } from './handlers/create-user.handler';
 import { deleteUserByIdHandler } from './handlers/delete-user-by-id.handler';
-import { userCreateInputValidation } from '../validation/users-input-validation.middlewares';
+import { createUserInputValidation } from '../validation/users-input-validation.middlewares';
 import { SETTINGS } from '../../core/settings/settings';
 
 /*Роутер из Express для работы с данными по пользователям.*/
@@ -25,6 +25,6 @@ usersRouter
     getUserListHandler
   )
   /*002. POST-запрос по добавлению пользователя.*/
-  .post(SETTINGS.CREATE_USER_PATH, userCreateInputValidation, inputValidationResultMiddleware, createUserHandler)
+  .post(SETTINGS.CREATE_USER_PATH, createUserInputValidation, inputValidationResultMiddleware, createUserHandler)
   /*003. DELETE-запрос по удалению пользователя по ID, используя URI-параметры.*/
   .delete(SETTINGS.DELETE_USER_BY_ID_PATH, idValidation, inputValidationResultMiddleware, deleteUserByIdHandler);

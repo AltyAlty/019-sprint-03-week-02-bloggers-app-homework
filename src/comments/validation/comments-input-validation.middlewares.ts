@@ -13,7 +13,7 @@ const contentValidation: ValidationChain = body('content')
 
 /*Комбинируем вышеуказанные middlewares в один middleware для использования его при проверке запросов по изменению
 комментария.*/
-export const commentUpdateInputValidation = [contentValidation];
+export const updateCommentInputValidation = [contentValidation];
 /*Комбинируем вышеуказанные middlewares в один middleware для использования его при проверке запросов по созданию
 комментария в посте.*/
-export const commentForPostCreateInputValidation = [contentValidation];
+export const createCommentForPostInputValidation = [contentValidation];

@@ -12,7 +12,7 @@ const bootstrap = async (): Promise<Express> => {
   /*Настраиваем экземпляр приложения Express.*/
   await setupApp(app);
   /*Указываем порт для экземпляра приложения Express.*/
-  const PORT: string | number = Number(SETTINGS.PORT) || 5001;
+  const PORT: string | number = SETTINGS.PORT || 5001;
 
   try {
     /*Подключаемся к серверу MongoDB.*/
