@@ -10,17 +10,15 @@ import { Result } from '../../core/types/result/result.type';
 import { BlogOutputDTO } from '../../blogs/routes/output-dto/blog.output-dto';
 import { PostDBType } from '../repositories/types/post-db.type';
 import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 /*Query-сервис для работы с постами.*/
 @injectable()
 export class PostsQueryService {
   constructor(
-    @inject(BlogsQueryService) private readonly blogsQueryService: BlogsQueryService,
-    @inject(PostsQueryRepository) private readonly postsQueryRepository: PostsQueryRepository
-  ) {
-    this.blogsQueryService = blogsQueryService;
-    this.postsQueryRepository = postsQueryRepository;
-  }
+    @inject(TYPES.BlogsQueryService) private readonly blogsQueryService: BlogsQueryService,
+    @inject(TYPES.PostsQueryRepository) private readonly postsQueryRepository: PostsQueryRepository
+  ) {}
 
   /*Метод для поиска поста по ID.*/
   async findById(id: string): Promise<Result<{ postOutput: PostOutputDTO } | null>> {

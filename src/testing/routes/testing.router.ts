@@ -1,10 +1,6 @@
 import { Router } from 'express';
 import { SETTINGS } from '../../core/settings/settings';
-import { container } from '../../composition-root';
-import { TestingController } from './testing.controller';
-
-/**/
-const testingController = container.get<TestingController>(TestingController);
+import { testingController } from '../../ioc/composition-root';
 
 /*Роутер из Express для тестирования приложения.*/
 export const testingRouter = Router({});

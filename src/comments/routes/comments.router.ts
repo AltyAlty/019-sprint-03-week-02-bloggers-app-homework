@@ -1,14 +1,9 @@
 import { Router } from 'express';
 import { idValidation } from '../../core/middlewares/validation/params-id-validation.middlewares';
 import { inputValidationResultMiddleware } from '../../core/middlewares/validation/input-validation-result.middleware';
-import { accessTokenGuardMiddleware } from '../../auth/middlewares/guard-middlewares/access-token.guard-middleware';
 import { updateCommentInputValidation } from '../validation/comments-input-validation.middlewares';
 import { SETTINGS } from '../../core/settings/settings';
-import { container } from '../../composition-root';
-import { CommentsController } from './comments.controller';
-
-/**/
-const commentsController = container.get<CommentsController>(CommentsController);
+import { accessTokenGuardMiddleware, commentsController } from '../../ioc/composition-root';
 
 /*Роутер из Express для работы с комментариями.*/
 export const commentsRouter: Router = Router({});

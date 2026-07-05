@@ -9,17 +9,15 @@ import { errorsHandler } from '../../core/errors/errors.handler';
 import { IdType } from '../../core/types/id.type';
 import { RevokeSessionByDeviceIdUriInputDTO } from './input-dto/uri/revoke-session-by-device-id-uri.input-dto';
 import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 /*Контроллер для работы с постами устройствами пользователя.*/
 @injectable()
 export class SecurityDevicesController {
   constructor(
-    @inject(AuthService) private readonly authService: AuthService,
-    @inject(SecurityDevicesQueryService) private readonly securityDevicesQueryService: SecurityDevicesQueryService
-  ) {
-    this.authService = authService;
-    this.securityDevicesQueryService = securityDevicesQueryService;
-  }
+    @inject(TYPES.AuthService) private readonly authService: AuthService,
+    @inject(TYPES.SecurityDevicesQueryService) private readonly securityDevicesQueryService: SecurityDevicesQueryService
+  ) {}
 
   /*Метод-обработчик для GET-запросов по получению устройств пользователя в активных сессиях.*/
   async getSecurityDeviceListHandler(

@@ -18,19 +18,16 @@ import { RefreshAccessAndRefreshTokensOutputDTO } from './output-dto/refresh-tok
 import { PasswordRecoveryEmailInputDTO } from './input-dto/password-recovery-email.input-dto';
 import { settingNewPasswordByRecoveryCodeInputDTO } from './input-dto/setting-new-password-by-recovery-code.input-dto';
 import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 /*Контроллер для работы с аутентификацией и авторизацией.*/
 @injectable()
 export class AuthController {
   constructor(
-    @inject(AuthService) private readonly authService: AuthService,
-    @inject(UsersService) private readonly usersService: UsersService,
-    @inject(UsersQueryService) private readonly usersQueryService: UsersQueryService
-  ) {
-    this.authService = authService;
-    this.usersService = usersService;
-    this.usersQueryService = usersQueryService;
-  }
+    @inject(TYPES.AuthService) private readonly authService: AuthService,
+    @inject(TYPES.UsersService) private readonly usersService: UsersService,
+    @inject(TYPES.UsersQueryService) private readonly usersQueryService: UsersQueryService
+  ) {}
 
   /*Метод-обработчик для POST-запросов по аутентификации пользователя по логину/email.*/
   async authByLoginOrEmailHandler(

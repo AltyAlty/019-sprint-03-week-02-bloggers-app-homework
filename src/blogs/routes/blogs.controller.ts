@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-
 import { GetBlogListQueryInputDTO } from './input-dto/query/get-blog-list-query.input-dto';
 import { PaginatedBlogListOutputDTO } from './output-dto/paginated-blog-list.output-dto';
 import { getSanitizedQueryInputWithDefaultPaginationSettings } from '../../core/utils/pagination/get-sanitized-query-input-with-default-pagination-settings';
@@ -26,21 +25,17 @@ import { BlogsService } from '../application/blogs.service';
 import { PostsService } from '../../posts/application/posts.service';
 import { BlogsQueryService } from '../application/blogs.query-service';
 import { PostsQueryService } from '../../posts/application/posts.query-service';
+import { TYPES } from '../../ioc/types';
 
 /*Контроллер для работы с блогами.*/
 @injectable()
 export class BlogsController {
   constructor(
-    @inject(BlogsService) private readonly blogsService: BlogsService,
-    @inject(PostsService) private readonly postsService: PostsService,
-    @inject(BlogsQueryService) private readonly blogsQueryService: BlogsQueryService,
-    @inject(PostsQueryService) private readonly postsQueryService: PostsQueryService
-  ) {
-    this.blogsService = blogsService;
-    this.postsService = postsService;
-    this.blogsQueryService = blogsQueryService;
-    this.postsQueryService = postsQueryService;
-  }
+    @inject(TYPES.BlogsService) private readonly blogsService: BlogsService,
+    @inject(TYPES.PostsService) private readonly postsService: PostsService,
+    @inject(TYPES.BlogsQueryService) private readonly blogsQueryService: BlogsQueryService,
+    @inject(TYPES.PostsQueryService) private readonly postsQueryService: PostsQueryService
+  ) {}
 
   /*Метод-обработчик для GET-запросов по получению блогов, используя query-параметры.*/
   async getBlogListHandler(

@@ -7,16 +7,14 @@ import {
   registrationEmailResendingValidation,
 } from '../validation/auth-input-validation.middlewares';
 import { inputValidationResultMiddleware } from '../../core/middlewares/validation/input-validation-result.middleware';
-import { accessTokenGuardMiddleware } from '../middlewares/guard-middlewares/access-token.guard-middleware';
 import { createUserInputValidation } from '../../users/validation/users-input-validation.middlewares';
 import { SETTINGS } from '../../core/settings/settings';
-import { refreshTokenGuardMiddleware } from '../middlewares/guard-middlewares/refresh-token.guard-middleware';
-import { requestRateLimitGuardMiddleware } from '../middlewares/guard-middlewares/request-rate-limit.guard-middleware';
-import { AuthController } from './auth.controller';
-import { container } from '../../composition-root';
-
-/**/
-const authController = container.get<AuthController>(AuthController);
+import {
+  accessTokenGuardMiddleware,
+  authController,
+  refreshTokenGuardMiddleware,
+  requestRateLimitGuardMiddleware,
+} from '../../ioc/composition-root';
 
 /*Роутер из Express для работы с аутентификацией и авторизацией.*/
 export const authRouter: Router = Router({});

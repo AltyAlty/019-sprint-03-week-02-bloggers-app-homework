@@ -39,7 +39,7 @@ export const db = {
       /*Указываем БД, к которой будет подключаться клиент для MongoDB.*/
       this.db = this.client.db(dbName);
       await this.db.command({ ping: 1 });
-      console.log('✅ Successfully connected to a MongoDB server');
+      // console.log('✅ Successfully connected to a MongoDB server');
       /*Создаем коллекции в указанной БД.*/
       this.blogsCollection = this.db.collection<BlogType>(SETTINGS.BLOGS_COLLECTION_NAME);
       this.postsCollection = this.db.collection<PostType>(SETTINGS.POSTS_COLLECTION_NAME);
@@ -92,7 +92,7 @@ export const db = {
   async stopDB(): Promise<void> {
     if (!this.client) throw new Error(`❌ No MongoDB clients`);
     await this.client.close();
-    console.log('✅ Connection successfully closed');
+    // console.log('✅ Connection successfully closed');
   },
 
   /*Метод для очистки коллекций в БД.*/

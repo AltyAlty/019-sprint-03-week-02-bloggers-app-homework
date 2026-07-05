@@ -10,17 +10,15 @@ import { mapToPaginatedCommentListOutputDTO } from '../repositories/mappers/map-
 import { PostOutputDTO } from '../../posts/routes/output-dto/post.output-dto';
 import { CommentDBType } from '../repositories/types/comment-db.type';
 import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 /*Query-сервис для работы с комментариями.*/
 @injectable()
 export class CommentsQueryService {
   constructor(
-    @inject(PostsQueryService) private readonly postsQueryService: PostsQueryService,
-    @inject(CommentsQueryRepository) private readonly commentsQueryRepository: CommentsQueryRepository
-  ) {
-    this.postsQueryService = postsQueryService;
-    this.commentsQueryRepository = commentsQueryRepository;
-  }
+    @inject(TYPES.PostsQueryService) private readonly postsQueryService: PostsQueryService,
+    @inject(TYPES.CommentsQueryRepository) private readonly commentsQueryRepository: CommentsQueryRepository
+  ) {}
 
   /*Метод для поиска комментария по ID.*/
   async findById(id: string): Promise<Result<{ commentOutput: CommentOutputDTO } | null>> {

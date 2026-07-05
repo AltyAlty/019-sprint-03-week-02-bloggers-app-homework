@@ -8,13 +8,12 @@ import { ResultStatuses } from '../../core/types/result/result-statuses';
 import { Result } from '../../core/types/result/result.type';
 import { BlogDBType } from '../repositories/types/blog-db.type';
 import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 /*Query-сервис для работы с блогами.*/
 @injectable()
 export class BlogsQueryService {
-  constructor(@inject(BlogsQueryRepository) private readonly blogsQueryRepository: BlogsQueryRepository) {
-    this.blogsQueryRepository = blogsQueryRepository;
-  }
+  constructor(@inject(TYPES.BlogsQueryRepository) private readonly blogsQueryRepository: BlogsQueryRepository) {}
 
   /*Метод для поиска блога по ID.*/
   async findById(id: string): Promise<Result<{ blogOutput: BlogOutputDTO } | null>> {

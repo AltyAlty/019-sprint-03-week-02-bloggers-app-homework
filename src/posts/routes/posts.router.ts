@@ -1,19 +1,13 @@
 import { Router } from 'express';
 import { inputValidationResultMiddleware } from '../../core/middlewares/validation/input-validation-result.middleware';
-import { basicAuthGuardMiddleware } from '../../auth/middlewares/guard-middlewares/basic-auth.guard-middleware';
 import { idValidation, postIdValidation } from '../../core/middlewares/validation/params-id-validation.middlewares';
 import { createPostInputValidation, updatePostInputValidation } from '../validation/posts-input-validation.middlewares';
 import { paginationValidationMiddleware } from '../../core/middlewares/validation/pagination-validation.middleware';
 import { PostSortFieldQueryInputDTO } from './input-dto/query/post-sort-field-query.input-dto';
 import { CommentSortFieldQueryInputDTO } from '../../comments/routes/input-dto/query/comment-sort-field-query.input-dto';
-import { accessTokenGuardMiddleware } from '../../auth/middlewares/guard-middlewares/access-token.guard-middleware';
 import { createCommentForPostInputValidation } from '../../comments/validation/comments-input-validation.middlewares';
 import { SETTINGS } from '../../core/settings/settings';
-import { container } from '../../composition-root';
-import { PostsController } from './posts.controller';
-
-/**/
-const postsController = container.get<PostsController>(PostsController);
+import { accessTokenGuardMiddleware, basicAuthGuardMiddleware, postsController } from '../../ioc/composition-root';
 
 /*Роутер из Express для работы с постами.*/
 export const postsRouter: Router = Router({});

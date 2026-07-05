@@ -10,22 +10,15 @@ import { UserOutputDTO } from '../../users/routes/output-dto/user.output-dto';
 import { PostOutputDTO } from '../../posts/routes/output-dto/post.output-dto';
 import { CommentDBType } from '../repositories/types/comment-db.type';
 import { inject, injectable } from 'inversify';
-import { container } from '../../composition-root';
+import { TYPES } from '../../ioc/types';
+import { lazyInject } from '../../ioc/decorators';
 
 /*Сервис для работы с комментариями.*/
 @injectable()
 export class CommentsService {
-  constructor(@inject(CommentsRepository) private readonly commentsRepository: CommentsRepository) {
-    this.commentsRepository = commentsRepository;
-  }
-
-  private get usersService() {
-    return container.get(UsersService);
-  }
-
-  private get postsService() {
-    return container.get(PostsService);
-  }
+  @lazyInject(TYPES.UsersService) private readonly usersService!: UsersService;
+  @lazyInject(TYPES.PostsService) private readonly postsService!: PostsService;
+  constructor(@inject(TYPES.CommentsRepository) private readonly commentsRepository: CommentsRepository) {}
 
   /*Метод для добавления комментария в пост.*/
   async createForPost(

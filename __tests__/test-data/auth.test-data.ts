@@ -1,15 +1,21 @@
-import { JwtAdapter } from '../../src/auth/adapters/jwt.adapter';
 import { SETTINGS } from '../../src/core/settings/settings';
 import { invalidUserIds } from './users.test-data';
 import { invalidDeviceIds } from './security-devices.test-data';
 import { ObjectId } from 'mongodb';
 import { randomUUID } from 'crypto';
 import { add } from 'date-fns/add';
+import { JwtAdapter } from '../../src/auth/adapters/jwt.adapter';
+
+/*В тестах создаем локальный экземпляр, так как:
+1. Тестовые данные будут полностью независимы от того, как сконфигурирован контейнер в самом приложении.
+2. При импорте этого файла не будет запускаться тяжелая логика инициализации контейнера.
+3. Не засоряем "composition-root.ts" зависимостями, которые не нужны роутерам.*/
+const testJwtAdapter = new JwtAdapter();
 
 export const invalidBasicAuthTokens = { BAT_01: 'token' };
 
 export const validAccessTokens = {
-  AT_01: JwtAdapter.createAccessTokenSync(new ObjectId().toString(), SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!),
+  AT_01: testJwtAdapter.createAccessTokenSync(new ObjectId().toString(), SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!),
 };
 
 export const invalidAccessTokens = {
@@ -21,11 +27,11 @@ export const invalidAccessTokens = {
   AT_06: undefined,
   AT_07: [],
   AT_08: {},
-  AT_09: JwtAdapter.createAccessTokenSync(invalidUserIds.id_01, SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!),
+  AT_09: testJwtAdapter.createAccessTokenSync(invalidUserIds.id_01, SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!),
 };
 
 export const validRefreshTokens = {
-  RT_01: JwtAdapter.createRefreshTokenSync(
+  RT_01: testJwtAdapter.createRefreshTokenSync(
     new ObjectId().toString(),
     new ObjectId().toString(),
     SETTINGS.RT_SECRET!,
@@ -43,7 +49,7 @@ export const invalidRefreshTokens = {
   RT_07: [],
   RT_08: {},
 
-  RT_09: JwtAdapter.createRefreshTokenSync(
+  RT_09: testJwtAdapter.createRefreshTokenSync(
     invalidUserIds.id_01,
     invalidDeviceIds.id_01,
     SETTINGS.RT_SECRET!,

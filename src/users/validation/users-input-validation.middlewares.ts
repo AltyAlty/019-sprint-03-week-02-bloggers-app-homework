@@ -1,9 +1,8 @@
 import { body, ValidationChain } from 'express-validator';
-import { UsersRepository } from '../repositories/users.repository';
 import { UserDBType } from '../repositories/types/user-db.type';
-import { container } from '../../composition-root';
-
-const usersRepository = container.get<UsersRepository>(UsersRepository);
+import { container } from '../../ioc/container';
+import { UsersRepository } from '../repositories/users.repository';
+import { TYPES } from '../../ioc/types';
 
 /*Middleware для проверки, что поле "login":
 1. Существует в запросе.
@@ -25,6 +24,7 @@ const loginValidation: ValidationChain = body('login')
   .matches(/^[a-zA-Z0-9_-]*$/)
   .withMessage('Field "login" can only contain letters, numbers, underscores and hyphens')
   .custom(async (login: string) => {
+    const usersRepository = container.get<UsersRepository>(TYPES.UsersRepository);
     /*Просим репозиторий "usersRepository" найти пользователя по логину в БД. Если пользователь будет найден, то это
     будет означать, что логин не уникальный. В таком случае выкидываем ошибку с информацией об этом.*/
     const user: UserDBType | null = await usersRepository.findByLoginOrEmail(login);
@@ -62,6 +62,7 @@ const emailValidation: ValidationChain = body('email')
   .isEmail()
   .withMessage('Field "email" is invalid')
   .custom(async (email: string) => {
+    const usersRepository = container.get<UsersRepository>(TYPES.UsersRepository);
     /*Просим репозиторий "usersRepository" найти пользователя по email в БД. Если пользователь будет найден, то это
     будет означать, что email не уникальный. В таком случае выкидываем ошибку с информацией об этом.*/
     const user: UserDBType | null = await usersRepository.findByEmail(email);

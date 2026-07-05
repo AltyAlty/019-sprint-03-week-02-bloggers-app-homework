@@ -14,9 +14,13 @@ import { SessionDBType } from '../../../src/auth/repositories/types/session-db.t
 import { AuthRepository } from '../../../src/auth/repositories/auth.repository';
 import { UserOutputDTO } from '../../../src/users/routes/output-dto/user.output-dto';
 import { SecurityDeviceOutputDTO } from '../../../src/security-devices/routes/output-dto/security-device.output-dto';
+import { container } from '../../../src/ioc/container';
+import { TYPES } from '../../../src/ioc/types';
 
 describe('Security Devices API', () => {
   const app = doBeforeTestsWithMongoMemoryServer();
+  const jwtAdapter = container.get<JwtAdapter>(TYPES.JwtAdapter);
+  const authRepository = container.get<AuthRepository>(TYPES.AuthRepository);
 
   it('✅ 001 should return a list of security devices; 001. GET /api/security/devices', async () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
@@ -45,21 +49,21 @@ describe('Security Devices API', () => {
     );
 
     const decodedRefreshTokenPayload_01: { deviceId: string; iat: number } | null =
-      await JwtAdapter.decodeRefreshToken(refreshToken_01);
+      await jwtAdapter.decodeRefreshToken(refreshToken_01);
 
     const decodedRefreshTokenPayloadDeviceId_01: string | undefined = decodedRefreshTokenPayload_01?.deviceId;
     const decodedRefreshTokenPayloadIat_01: number | undefined = decodedRefreshTokenPayload_01?.iat;
     const decodedRefreshTokenPayloadIatDate_01: Date = new Date(decodedRefreshTokenPayloadIat_01! * 1000);
 
     const decodedRefreshTokenPayload_02: { deviceId: string; iat: number } | null =
-      await JwtAdapter.decodeRefreshToken(refreshToken_02);
+      await jwtAdapter.decodeRefreshToken(refreshToken_02);
 
     const decodedRefreshTokenPayloadDeviceId_02: string | undefined = decodedRefreshTokenPayload_02?.deviceId;
     const decodedRefreshTokenPayloadIat_02: number | undefined = decodedRefreshTokenPayload_02?.iat;
     const decodedRefreshTokenPayloadIatDate_02: Date = new Date(decodedRefreshTokenPayloadIat_02! * 1000);
 
     const decodedRefreshTokenPayload_03: { deviceId: string; iat: number } | null =
-      await JwtAdapter.decodeRefreshToken(refreshToken_03);
+      await jwtAdapter.decodeRefreshToken(refreshToken_03);
 
     const decodedRefreshTokenPayloadDeviceId_03: string | undefined = decodedRefreshTokenPayload_03?.deviceId;
     const decodedRefreshTokenPayloadIat_03: number | undefined = decodedRefreshTokenPayload_03?.iat;
@@ -103,7 +107,7 @@ describe('Security Devices API', () => {
     await loginUserReturnAccessAndRefreshTokens(app, testUserAgent_03, loginUserData);
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await JwtAdapter.decodeRefreshToken(refreshToken);
+      await jwtAdapter.decodeRefreshToken(refreshToken);
 
     const decodedRefreshTokenPayloadUserId: string | undefined = decodedRefreshTokenPayload?.userId;
     const decodedRefreshTokenPayloadDeviceId: string | undefined = decodedRefreshTokenPayload?.deviceId;
@@ -114,7 +118,7 @@ describe('Security Devices API', () => {
 
     await revokeSessionsExceptCurrentDevice(app, testUserAgent_02, refreshToken);
 
-    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
     const session = sessions[0];
     const sessionUserId: string = session.userId;
     const sessionDeviceId: string = session.deviceId;
@@ -178,7 +182,7 @@ describe('Security Devices API', () => {
     );
 
     const decodedRefreshTokenPayload_01: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await JwtAdapter.decodeRefreshToken(refreshToken_01);
+      await jwtAdapter.decodeRefreshToken(refreshToken_01);
 
     const decodedRefreshTokenPayloadUserId_01: string | undefined = decodedRefreshTokenPayload_01?.userId;
     const decodedRefreshTokenPayloadDeviceId_01: string | undefined = decodedRefreshTokenPayload_01?.deviceId;
@@ -188,12 +192,12 @@ describe('Security Devices API', () => {
     const decodedRefreshTokenPayloadExpDate_01: Date = new Date(decodedRefreshTokenPayloadExp_01! * 1000);
 
     const decodedRefreshTokenPayload_02: { deviceId: string } | null =
-      await JwtAdapter.decodeRefreshToken(refreshToken_02);
+      await jwtAdapter.decodeRefreshToken(refreshToken_02);
 
     const decodedRefreshTokenPayloadDeviceId_02: string | undefined = decodedRefreshTokenPayload_02?.deviceId;
 
     const decodedRefreshTokenPayload_03: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await JwtAdapter.decodeRefreshToken(refreshToken_03);
+      await jwtAdapter.decodeRefreshToken(refreshToken_03);
 
     const decodedRefreshTokenPayloadUserId_03: string | undefined = decodedRefreshTokenPayload_03?.userId;
     const decodedRefreshTokenPayloadDeviceId_03: string | undefined = decodedRefreshTokenPayload_03?.deviceId;
@@ -204,7 +208,7 @@ describe('Security Devices API', () => {
 
     await revokeSessionByDeviceId(app, testUserAgent_02, decodedRefreshTokenPayloadDeviceId_02!, refreshToken_02);
 
-    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
     const session_01 = sessions[0];
     const sessionUserId_01: string = session_01.userId;
     const sessionDeviceId_01: string = session_01.deviceId;

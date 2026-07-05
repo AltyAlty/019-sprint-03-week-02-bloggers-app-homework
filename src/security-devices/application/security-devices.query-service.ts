@@ -7,18 +7,16 @@ import { Result } from '../../core/types/result/result.type';
 import { SecurityDeviceDBType } from '../repositories/types/security-device-db.type';
 import { mapToSecurityDeviceListOutputDTO } from '../repositories/mappers/map-to-security-device-list-output-dto.util';
 import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 /*Query-сервис для работы с устройствами пользователей.*/
 @injectable()
 export class SecurityDevicesQueryService {
   constructor(
-    @inject(AuthService) private readonly authService: AuthService,
-    @inject(SecurityDevicesQueryRepository)
+    @inject(TYPES.AuthService) private readonly authService: AuthService,
+    @inject(TYPES.SecurityDevicesQueryRepository)
     private readonly securityDevicesQueryRepository: SecurityDevicesQueryRepository
-  ) {
-    this.authService = authService;
-    this.securityDevicesQueryRepository = securityDevicesQueryRepository;
-  }
+  ) {}
 
   /*Метод для поиска устройств пользователя по ID пользователя.*/
   async findAllByUserId(userId: string): Promise<Result<{ securityDeviceListOutput: SecurityDeviceListOutputDTO }>> {

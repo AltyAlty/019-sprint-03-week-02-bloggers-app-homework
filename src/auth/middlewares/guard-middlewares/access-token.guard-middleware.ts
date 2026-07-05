@@ -1,53 +1,54 @@
 import { NextFunction, Request, Response } from 'express';
-import { JwtAdapter } from '../../adapters/jwt.adapter';
 import { IdType } from '../../../core/types/id.type';
 import { HttpStatuses } from '../../../core/types/http-statuses';
 import { SETTINGS } from '../../../core/settings/settings';
-import { UsersRepository } from '../../../users/repositories/users.repository';
 import { ObjectId } from 'mongodb';
-import { container } from '../../../composition-root';
-
-/**/
-const jwtAdapter = container.get<JwtAdapter>(JwtAdapter);
-const usersRepository = container.get<UsersRepository>(UsersRepository);
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../../ioc/types';
+import { JwtAdapter } from '../../adapters/jwt.adapter';
+import { UsersRepository } from '../../../users/repositories/users.repository';
 
 /*Guard-middleware для проверки AT.*/
-export const accessTokenGuardMiddleware = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void | Response> => {
-  /*Получаем имя устройства пользователя из запроса.*/
-  const deviceName: string | undefined = req.headers['user-agent'];
-  /*Если имя устройства пользователя не было найдено, то сообщаем об отказе в аутентификации клиенту.*/
-  if (!deviceName || deviceName.trim() === '') return res.sendStatus(HttpStatuses.Unauthorized_401);
-  /*Если имя устройства пользователя было найдено, то получаем IP-адрес пользователя из запроса.*/
-  const ip: string | undefined = req.ip || req.socket.remoteAddress;
-  /*Если IP-адрес пользователя не был найден, то сообщаем об отказе в аутентификации клиенту.*/
-  if (!ip) return res.sendStatus(HttpStatuses.Unauthorized_401);
-  /*Если IP-адрес пользователя был найден, то получаем значение заголовка "authorization" их запроса.*/
-  const authorizationHeader: string | undefined = req.headers['authorization'];
-  /*Если в заголовках запроса нет заголовка "authorization", то сообщаем об отказе в аутентификации клиенту.*/
-  if (!authorizationHeader) return res.sendStatus(HttpStatuses.Unauthorized_401);
-  /*Если в заголовках запроса есть заголовок "authorization", то получаем из него тип авторизации и AT.*/
-  const [authType, token]: string[] = authorizationHeader.split(' ');
-  /*Если тип авторизации не "Bearer", то сообщаем об отказе в аутентификации клиенту.*/
-  if (authType !== 'Bearer') return res.sendStatus(HttpStatuses.Unauthorized_401);
-  /*Если тип авторизации "Bearer", то просим адаптер "jwtAdapter" верифицировать AT.*/
-  const payload: { userId: string } | null = await jwtAdapter.verifyAccessToken(token, SETTINGS.AT_SECRET!);
-  /*Если верификация AT не прошла успешно, то сообщаем об отказе в аутентификации клиенту.*/
-  if (!payload) return res.sendStatus(HttpStatuses.Unauthorized_401);
-  /*Если верификация AT прошла успешно, то получаем ID пользователя из AT.*/
-  const userIdFromAT: string = payload.userId as string;
-  /*Если ID пользователя из AT не соответствуют формату ObjectId, то сообщаем об отказе в аутентификации клиенту.*/
-  if (!ObjectId.isValid(userIdFromAT)) return res.sendStatus(HttpStatuses.Unauthorized_401);
-  /*Если ID пользователя из AT соответствуют формату ObjectId, то просим репозиторий "usersRepository" найти
-  пользователя по ID в БД.*/
-  const userDB = await usersRepository.findById(userIdFromAT);
-  /*Если пользователь не был найден, то сообщаем об отказе в аутентификации клиенту.*/
-  if (!userDB) return res.sendStatus(HttpStatuses.Unauthorized_401);
-  /*Если пользователь был найден, то прикрепляем ID пользователя к запросу.*/
-  req.userId = { id: userIdFromAT } as IdType;
-  /*Разрешаем дальнейшее выполнение запроса при помощи функции "next()".*/
-  next();
-};
+@injectable()
+export class AccessTokenGuardMiddleware {
+  constructor(
+    @inject(TYPES.JwtAdapter) private readonly jwtAdapter: JwtAdapter,
+    @inject(TYPES.UsersRepository) private readonly usersRepository: UsersRepository
+  ) {}
+
+  public async execute(req: Request, res: Response, next: NextFunction): Promise<void | Response> {
+    /*Получаем имя устройства пользователя из запроса.*/
+    const deviceName: string | undefined = req.headers['user-agent'];
+    /*Если имя устройства пользователя не было найдено, то сообщаем об отказе в аутентификации клиенту.*/
+    if (!deviceName || deviceName.trim() === '') return res.sendStatus(HttpStatuses.Unauthorized_401);
+    /*Если имя устройства пользователя было найдено, то получаем IP-адрес пользователя из запроса.*/
+    const ip: string | undefined = req.ip || req.socket.remoteAddress;
+    /*Если IP-адрес пользователя не был найден, то сообщаем об отказе в аутентификации клиенту.*/
+    if (!ip) return res.sendStatus(HttpStatuses.Unauthorized_401);
+    /*Если IP-адрес пользователя был найден, то получаем значение заголовка "authorization" их запроса.*/
+    const authorizationHeader: string | undefined = req.headers['authorization'];
+    /*Если в заголовках запроса нет заголовка "authorization", то сообщаем об отказе в аутентификации клиенту.*/
+    if (!authorizationHeader) return res.sendStatus(HttpStatuses.Unauthorized_401);
+    /*Если в заголовках запроса есть заголовок "authorization", то получаем из него тип авторизации и AT.*/
+    const [authType, token]: string[] = authorizationHeader.split(' ');
+    /*Если тип авторизации не "Bearer", то сообщаем об отказе в аутентификации клиенту.*/
+    if (authType !== 'Bearer') return res.sendStatus(HttpStatuses.Unauthorized_401);
+    /*Если тип авторизации "Bearer", то просим адаптер "jwtAdapter" верифицировать AT.*/
+    const payload: { userId: string } | null = await this.jwtAdapter.verifyAccessToken(token, SETTINGS.AT_SECRET!);
+    /*Если верификация AT не прошла успешно, то сообщаем об отказе в аутентификации клиенту.*/
+    if (!payload) return res.sendStatus(HttpStatuses.Unauthorized_401);
+    /*Если верификация AT прошла успешно, то получаем ID пользователя из AT.*/
+    const userIdFromAT: string = payload.userId as string;
+    /*Если ID пользователя из AT не соответствуют формату ObjectId, то сообщаем об отказе в аутентификации клиенту.*/
+    if (!ObjectId.isValid(userIdFromAT)) return res.sendStatus(HttpStatuses.Unauthorized_401);
+    /*Если ID пользователя из AT соответствуют формату ObjectId, то просим репозиторий "usersRepository" найти
+    пользователя по ID в БД.*/
+    const userDB = await this.usersRepository.findById(userIdFromAT);
+    /*Если пользователь не был найден, то сообщаем об отказе в аутентификации клиенту.*/
+    if (!userDB) return res.sendStatus(HttpStatuses.Unauthorized_401);
+    /*Если пользователь был найден, то прикрепляем ID пользователя к запросу.*/
+    req.userId = { id: userIdFromAT } as IdType;
+    /*Разрешаем дальнейшее выполнение запроса при помощи функции "next()".*/
+    next();
+  }
+}

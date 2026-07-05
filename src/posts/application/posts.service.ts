@@ -11,22 +11,15 @@ import { PostOutputDTO } from '../routes/output-dto/post.output-dto';
 import { mapToPostOutputDTO } from '../repositories/mappers/map-to-post-output-dto.util';
 import { PostDBType } from '../repositories/types/post-db.type';
 import { inject, injectable } from 'inversify';
-import { container } from '../../composition-root';
+import { TYPES } from '../../ioc/types';
+import { lazyInject } from '../../ioc/decorators';
 
 /*Сервис для работы с постами.*/
 @injectable()
 export class PostsService {
-  constructor(@inject(PostsRepository) private readonly postsRepository: PostsRepository) {
-    this.postsRepository = postsRepository;
-  }
-
-  private get blogsService() {
-    return container.get(BlogsService);
-  }
-
-  private get commentsService() {
-    return container.get(CommentsService);
-  }
+  @lazyInject(TYPES.BlogsService) private readonly blogsService!: BlogsService;
+  @lazyInject(TYPES.CommentsService) private readonly commentsService!: CommentsService;
+  constructor(@inject(TYPES.PostsRepository) private readonly postsRepository: PostsRepository) {}
 
   /*Метод для добавления поста.*/
   async create(dto: CreatePostInputDTO): Promise<Result<{ createdPostId: string } | null>> {

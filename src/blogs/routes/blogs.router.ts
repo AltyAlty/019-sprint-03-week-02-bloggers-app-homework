@@ -2,17 +2,12 @@ import { Router } from 'express';
 import { blogIdValidation, idValidation } from '../../core/middlewares/validation/params-id-validation.middlewares';
 import { inputValidationResultMiddleware } from '../../core/middlewares/validation/input-validation-result.middleware';
 import { createBlogInputValidation, updateBlogInputValidation } from '../validation/blogs-input-validation.middlewares';
-import { basicAuthGuardMiddleware } from '../../auth/middlewares/guard-middlewares/basic-auth.guard-middleware';
 import { paginationValidationMiddleware } from '../../core/middlewares/validation/pagination-validation.middleware';
 import { BlogSortFieldQueryInputDTO } from './input-dto/query/blog-sort-field-query.input-dto';
 import { createPostForBlogInputValidation } from '../../posts/validation/posts-input-validation.middlewares';
 import { PostSortFieldQueryInputDTO } from '../../posts/routes/input-dto/query/post-sort-field-query.input-dto';
 import { SETTINGS } from '../../core/settings/settings';
-import { container } from '../../composition-root';
-import { BlogsController } from './blogs.controller';
-
-/**/
-const blogsController = container.get<BlogsController>(BlogsController);
+import { basicAuthGuardMiddleware, blogsController } from '../../ioc/composition-root';
 
 /*Роутер из Express для работы с блогами.*/
 export const blogsRouter: Router = Router({});

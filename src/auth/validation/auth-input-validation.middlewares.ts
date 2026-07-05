@@ -1,13 +1,11 @@
 import { body, ValidationChain } from 'express-validator';
-import { UsersRepository } from '../../users/repositories/users.repository';
 import { UserDBType } from '../../users/repositories/types/user-db.type';
 import { EmailConfirmationDBType } from '../repositories/types/email-сonfirmation-db.type';
-import { AuthRepository } from '../repositories/auth.repository';
 import { RecoveryCodeDataDBType } from '../repositories/types/recovery-code-data-db.type';
-import { container } from '../../composition-root';
-
-const authRepository = container.get<AuthRepository>(AuthRepository);
-const usersRepository = container.get<UsersRepository>(UsersRepository);
+import { container } from '../../ioc/container';
+import { TYPES } from '../../ioc/types';
+import { AuthRepository } from '../repositories/auth.repository';
+import { UsersRepository } from '../../users/repositories/users.repository';
 
 const loginOrEmailValidation: ValidationChain = body('loginOrEmail')
   .exists()
@@ -64,6 +62,9 @@ const recoveryCodeValidation: ValidationChain = body('recoveryCode')
   .matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
   .withMessage('Field "recoveryCode" is invalid')
   .custom(async (recoveryCode: string) => {
+    const authRepository = container.get<AuthRepository>(TYPES.AuthRepository);
+    const usersRepository = container.get<UsersRepository>(TYPES.UsersRepository);
+
     const recoveryCodeDataDB: RecoveryCodeDataDBType | null =
       await authRepository.findRecoveryPasswordCodeDataByCode(recoveryCode);
 
@@ -93,6 +94,8 @@ export const confirmationCodeValidation: ValidationChain = body('code')
   .matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
   .withMessage('Field "code" is invalid')
   .custom(async (code: string) => {
+    const authRepository = container.get<AuthRepository>(TYPES.AuthRepository);
+    const usersRepository = container.get<UsersRepository>(TYPES.UsersRepository);
     const emailConfirmationDB: EmailConfirmationDBType | null = await authRepository.findEmailConfirmationByCode(code);
     if (!emailConfirmationDB) throw new Error('Field "code" is invalid');
     if (emailConfirmationDB.expirationDate <= new Date()) throw new Error('Confirmation code is expired');
@@ -122,6 +125,7 @@ export const registrationEmailResendingValidation: ValidationChain = body('email
   .isEmail()
   .withMessage('Field "email" is invalid')
   .custom(async (email: string) => {
+    const usersRepository = container.get<UsersRepository>(TYPES.UsersRepository);
     const userDB: UserDBType | null = await usersRepository.findByEmail(email);
     if (!userDB) throw new Error('Field "email" is invalid');
     if (userDB.isConfirmed) throw new Error('Registration has already been confirmed');

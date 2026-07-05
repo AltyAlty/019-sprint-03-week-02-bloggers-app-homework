@@ -24,27 +24,21 @@ import { RecoveryCodeDataDBType } from '../repositories/types/recovery-code-data
 import { mapToRecoveryCodeData } from '../repositories/mappers/map-to-recovery-code-data.util';
 import { RecoveryCodeDataType } from './types/recovery-code-data.type';
 import { inject, injectable } from 'inversify';
-import { container } from '../../composition-root';
+import { TYPES } from '../../ioc/types';
+import { lazyInject } from '../../ioc/decorators';
 
 /*Сервис для работы с аутентификацией и авторизацией.*/
 @injectable()
 export class AuthService {
-  constructor(
-    @inject(Argon2Adapter) private readonly argon2Adapter: Argon2Adapter,
-    @inject(JwtAdapter) private readonly jwtAdapter: JwtAdapter,
-    @inject(NodemailerAdapter) private readonly nodemailerAdapter: NodemailerAdapter,
-    @inject(SecurityDevicesService) private readonly securityDevicesService: SecurityDevicesService,
-    @inject(AuthRepository) private readonly authRepository: AuthRepository
-  ) {
-    this.argon2Adapter = argon2Adapter;
-    this.jwtAdapter = jwtAdapter;
-    this.nodemailerAdapter = nodemailerAdapter;
-    this.authRepository = authRepository;
-  }
+  @lazyInject(TYPES.UsersService) private readonly usersService!: UsersService;
 
-  private get usersService() {
-    return container.get(UsersService);
-  }
+  constructor(
+    @inject(TYPES.Argon2Adapter) private readonly argon2Adapter: Argon2Adapter,
+    @inject(TYPES.JwtAdapter) private readonly jwtAdapter: JwtAdapter,
+    @inject(TYPES.NodemailerAdapter) private readonly nodemailerAdapter: NodemailerAdapter,
+    @inject(TYPES.SecurityDevicesService) private readonly securityDevicesService: SecurityDevicesService,
+    @inject(TYPES.AuthRepository) private readonly authRepository: AuthRepository
+  ) {}
 
   /*Метод для аутентификации пользователя по логину/email и паролю.*/
   async loginUser(
@@ -102,11 +96,8 @@ export class AuthService {
     return { status: ResultStatuses.Ok, data: { accessToken, refreshToken }, extensions: [] };
   }
 
-  /*Метод для регистрации пользователя. Второй параметр для использования в тестах.*/
-  async registerUser(
-    dto: CreateUserInputDTO,
-    emailAdapter = this.nodemailerAdapter
-  ): Promise<Result<{ createdUserId: string }>> {
+  /*Метод для регистрации пользователя.*/
+  async registerUser(dto: CreateUserInputDTO): Promise<Result<{ createdUserId: string }>> {
     /*Генерируем код подтверждения регистрации пользователя.*/
     const newUserConfirmationCode: string = randomUUID();
     /*Генерируем дату истечения кода подтверждения регистрации пользователя.*/
@@ -119,7 +110,7 @@ export class AuthService {
     await this.createEmailConfirmation(createdUserId, newUserConfirmationCode, newUserExpirationDate);
 
     /*Просим адаптер "nodemailerAdapter" отправить письмо о подтверждении регистрации пользователя.*/
-    emailAdapter
+    this.nodemailerAdapter
       .sendMail(dto.email, 'Complete Registration', newUserConfirmationCode, emailExamples.completeRegistrationEmail)
       .catch(error => console.error('Failed to send a confirmation email: ', error));
 
@@ -209,8 +200,8 @@ export class AuthService {
     return { status: ResultStatuses.Created, data: {}, extensions: [] };
   }
 
-  /*Метод для отправки письма с кодом восстановления пароля пользователя. Второй параметр для использования в тестах.*/
-  async sendRecoveryPasswordCode(email: string, emailAdapter = this.nodemailerAdapter): Promise<Result<{}>> {
+  /*Метод для отправки письма с кодом восстановления пароля пользователя.*/
+  async sendRecoveryPasswordCode(email: string): Promise<Result<{}>> {
     /*Просим сервис "usersService" найти пользователя по email.*/
     const userResult: Result<{
       userOutputWithIsConfirmedAndPasswordHash: UserOutputDTO & { isConfirmed: boolean; passwordHash: string };
@@ -231,7 +222,7 @@ export class AuthService {
     await this.authRepository.createRecoveryPasswordCodeData(userId, recoveryCode, recoveryCodeExpirationDate);
 
     /*Просим адаптер "nodemailerAdapter" отправить письмо с кодом восстановления пароля пользователя.*/
-    emailAdapter
+    this.nodemailerAdapter
       .sendMail(email, 'Recover Password', recoveryCode, emailExamples.passwordRecoveryEmail)
       .catch(error => console.error('Failed to send a recovery password email: ', error));
 
@@ -304,9 +295,8 @@ export class AuthService {
     return { status: ResultStatuses.Ok, data: { recoveryCodeDataOutput }, extensions: [] };
   }
 
-  /*Метод для повторной отправки письма для подтверждения регистрации пользователя. Второй параметр для использования в
-  тестах.*/
-  async resendConfirmationEmail(email: string, emailAdapter = this.nodemailerAdapter): Promise<Result<{} | null>> {
+  /*Метод для повторной отправки письма для подтверждения регистрации пользователя.*/
+  async resendConfirmationEmail(email: string): Promise<Result<{} | null>> {
     /*Генерируем код подтверждения регистрации пользователя.*/
     const newUserConfirmationCode: string = randomUUID();
     /*Генерируем дату истечения кода подтверждения регистрации пользователя.*/
@@ -333,7 +323,7 @@ export class AuthService {
     await this.updateEmailConfirmationByUserId(userId, newUserConfirmationCode, newUserExpirationDate);
 
     /*Просим адаптер "nodemailerAdapter" повторно отправить письмо о подтверждении регистрации пользователя.*/
-    emailAdapter
+    this.nodemailerAdapter
       .sendMail(
         email,
         'Resending Complete Registration Email',

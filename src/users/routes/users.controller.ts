@@ -13,17 +13,15 @@ import { CreateUserInputDTO } from './input-dto/create-user.input-dto';
 import { UserOutputDTO } from './output-dto/user.output-dto';
 import { DeleteUSerByIdUriInputDTO } from './input-dto/uri/delete-user-by-id-uri.input-dto';
 import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 /*Контроллер для работы с пользователями.*/
 @injectable()
 export class UsersController {
   constructor(
-    @inject(UsersService) private readonly usersService: UsersService,
-    @inject(UsersQueryService) private readonly usersQueryService: UsersQueryService
-  ) {
-    this.usersService = usersService;
-    this.usersQueryService = usersQueryService;
-  }
+    @inject(TYPES.UsersService) private readonly usersService: UsersService,
+    @inject(TYPES.UsersQueryService) private readonly usersQueryService: UsersQueryService
+  ) {}
 
   /*Метод-обработчик для GET-запросов по получению пользователей с пагинацией, используя query-параметры.*/
   async getUserListHandler(

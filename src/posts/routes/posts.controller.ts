@@ -25,21 +25,17 @@ import { UpdatePostByIdUriInputDTO } from './input-dto/uri/update-post-by-id-uri
 import { UpdatePostByIdInputDTO } from './input-dto/update-post-by-id.input-dto';
 import { DeletePostByIdUriInputDTO } from './input-dto/uri/delete-post-by-id-uri.input-dto';
 import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 /*Контроллер для работы с постами.*/
 @injectable()
 export class PostsController {
   constructor(
-    @inject(PostsService) private readonly postsService: PostsService,
-    @inject(CommentsService) private readonly commentsService: CommentsService,
-    @inject(PostsQueryService) private readonly postsQueryService: PostsQueryService,
-    @inject(CommentsQueryService) private readonly commentsQueryService: CommentsQueryService
-  ) {
-    this.postsService = postsService;
-    this.commentsService = commentsService;
-    this.postsQueryService = postsQueryService;
-    this.commentsQueryService = commentsQueryService;
-  }
+    @inject(TYPES.PostsService) private readonly postsService: PostsService,
+    @inject(TYPES.CommentsService) private readonly commentsService: CommentsService,
+    @inject(TYPES.PostsQueryService) private readonly postsQueryService: PostsQueryService,
+    @inject(TYPES.CommentsQueryService) private readonly commentsQueryService: CommentsQueryService
+  ) {}
 
   /*Метод-обработчик для GET-запросов по получению комментариев с пагинацией в посте по ID, используя URI-параметры и
   query-параметры.*/

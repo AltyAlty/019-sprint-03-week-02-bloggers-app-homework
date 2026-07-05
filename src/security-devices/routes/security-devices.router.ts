@@ -1,13 +1,8 @@
 import { Router } from 'express';
 import { SETTINGS } from '../../core/settings/settings';
-import { refreshTokenGuardMiddleware } from '../../auth/middlewares/guard-middlewares/refresh-token.guard-middleware';
 import { idValidation } from '../../core/middlewares/validation/params-id-validation.middlewares';
 import { inputValidationResultMiddleware } from '../../core/middlewares/validation/input-validation-result.middleware';
-import { container } from '../../composition-root';
-import { SecurityDevicesController } from './security-devices.controller';
-
-/**/
-const securityDevicesController = container.get<SecurityDevicesController>(SecurityDevicesController);
+import { refreshTokenGuardMiddleware, securityDevicesController } from '../../ioc/composition-root';
 
 /*Роутер из Express для работы с устройствами пользователя.*/
 export const securityDevicesRouter: Router = Router({});

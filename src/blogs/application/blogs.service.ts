@@ -9,18 +9,14 @@ import { BlogOutputDTO } from '../routes/output-dto/blog.output-dto';
 import { mapToBlogOutputDTO } from '../repositories/mappers/map-to-blog-output-dto.util';
 import { BlogDBType } from '../repositories/types/blog-db.type';
 import { inject, injectable } from 'inversify';
-import { container } from '../../composition-root';
+import { TYPES } from '../../ioc/types';
+import { lazyInject } from '../../ioc/decorators';
 
 /*Сервис для работы с блогами.*/
 @injectable()
 export class BlogsService {
-  constructor(@inject(BlogsRepository) private readonly blogsRepository: BlogsRepository) {
-    this.blogsRepository = blogsRepository;
-  }
-
-  private get postsService() {
-    return container.get(PostsService);
-  }
+  @lazyInject(TYPES.PostsService) private readonly postsService!: PostsService;
+  constructor(@inject(TYPES.BlogsRepository) private readonly blogsRepository: BlogsRepository) {}
 
   /*Метод для добавления блога.*/
   async create(dto: CreateBlogInputDTO): Promise<Result<{ createdBlogId: string }>> {

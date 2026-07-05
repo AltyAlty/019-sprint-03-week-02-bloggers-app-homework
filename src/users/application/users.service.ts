@@ -12,26 +12,19 @@ import { UserDBType } from '../repositories/types/user-db.type';
 import { EmailConfirmationType } from '../../auth/application/types/email-сonfirmation.type';
 import { RecoveryCodeDataType } from '../../auth/application/types/recovery-code-data.type';
 import { inject, injectable } from 'inversify';
-import { container } from '../../composition-root';
+import { TYPES } from '../../ioc/types';
+import { lazyInject } from '../../ioc/decorators';
 
 /*Сервис для работы с пользователями.*/
 @injectable()
 export class UsersService {
+  @lazyInject(TYPES.AuthService) private readonly authService!: AuthService;
+  @lazyInject(TYPES.CommentsService) private readonly commentsService!: CommentsService;
+
   constructor(
-    @inject(Argon2Adapter) private readonly argon2Adapter: Argon2Adapter,
-    @inject(UsersRepository) private readonly usersRepository: UsersRepository
-  ) {
-    this.argon2Adapter = argon2Adapter;
-    this.usersRepository = usersRepository;
-  }
-
-  private get authService() {
-    return container.get(AuthService);
-  }
-
-  private get commentsService() {
-    return container.get(CommentsService);
-  }
+    @inject(TYPES.Argon2Adapter) private readonly argon2Adapter: Argon2Adapter,
+    @inject(TYPES.UsersRepository) private readonly usersRepository: UsersRepository
+  ) {}
 
   /*Метод для добавления пользователя.*/
   async create(dto: CreateUserInputDTO, isUserRegistering?: boolean): Promise<Result<{ createdUserId: string }>> {

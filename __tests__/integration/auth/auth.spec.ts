@@ -34,26 +34,47 @@ import { SecurityDeviceListOutputDTO } from '../../../src/security-devices/route
 import { getSecurityDeviceList } from '../../utils/security-devices/get-security-device-list.test-util';
 import { loginUserReturnAccessAndRefreshTokens } from '../../utils/auth/login-user-return-access-and-refresh-tokens.test-util';
 import { HttpStatuses } from '../../../src/core/types/http-statuses';
+import { container } from '../../../src/ioc/container';
+import { TYPES } from '../../../src/ioc/types';
 
 describe('Auth', () => {
   const app = doBeforeTestsWithMongoMemoryServer();
+  const mockEmailAdapter: jest.Mocked<NodemailerAdapter> = createMockEmailAdapter();
+  /*Подменяем "NodemailerAdapter". Важно делать до получения сервиса, в котором используется мок, то есть до сервиса
+  "AuthService".*/
+  container.rebind<NodemailerAdapter>(TYPES.NodemailerAdapter).toConstantValue(mockEmailAdapter);
+  /*Поскольку сервис "AuthService" является синглтоном, то переопределяем зависимости, чтобы выбросит старый синглтон и
+  собрать новый с целью подхвата мока для "NodemailerAdapter".*/
+  container.rebind<AuthService>(TYPES.AuthService).to(AuthService).inSingletonScope();
+  const authService = container.get<AuthService>(TYPES.AuthService);
+  const authRepository = container.get<AuthRepository>(TYPES.AuthRepository);
+  const usersRepository = container.get<UsersRepository>(TYPES.UsersRepository);
+  const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
+  const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
+  const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
+    createAuthServiceUpdateEmailConfirmationByUserIdSpy();
+
+  const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+    createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+  const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+    createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+  const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+    createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+  const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+  const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+  const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
 
   it('✅ 001 should register a user when a valid body passed; 003. POST /api/auth/registration', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
-    const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
-    const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
-    const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
-      createAuthServiceUpdateEmailConfirmationByUserIdSpy();
-
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
 
-    const registerUserResult: Result<{ createdUserId: string }> = await AuthService.registerUser(
-      createUserData,
-      mockEmailAdapter
-    );
+    const registerUserResult: Result<{ createdUserId: string }> = await authService.registerUser(createUserData);
 
     const createdUserId: string = registerUserResult.data.createdUserId;
-    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
     expect(typeof createdUserId).toBe('string');
     expect(createdUserDB?.login).toEqual(createUserData.login);
     expect(createdUserDB?.email).toEqual(createUserData.email);
@@ -71,77 +92,45 @@ describe('Auth', () => {
       expect.stringMatching(validUUIDRegExp),
       emailExamples.completeRegistrationEmail
     );
-
-    /*Приводим шпионов в изначальное состояния для использования их в других тестах.*/
-    usersServiceCreateSpy.mockRestore();
-    usersServiceConfirmByCodeSpy.mockRestore();
-    authServiceUpdateEmailConfirmationByUserIdSpy.mockRestore();
   });
 
   it('✅ 002 should confirm user registration when a correct confirmation code passed; 004. POST /api/auth/registration-confirmation', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
-    const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
-    const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
-    const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
-      createAuthServiceUpdateEmailConfirmationByUserIdSpy();
-
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
-
-    const registerUserResult: Result<{ createdUserId: string }> = await AuthService.registerUser(
-      createUserData,
-      mockEmailAdapter
-    );
-
+    const registerUserResult: Result<{ createdUserId: string }> = await authService.registerUser(createUserData);
     const createdUserId: string = registerUserResult.data.createdUserId;
-    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
 
     const emailConfirmationDB: EmailConfirmationDBType | null =
-      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
+      await authRepository.findEmailConfirmationByUserId(createdUserId);
 
     await confirmUserByCode(app, validUserAgents.userAgent_01, emailConfirmationDB?.confirmationCode);
 
-    const confirmedUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const confirmedUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
     expect(createdUserDB?.isConfirmed).toBeFalsy();
     expect(confirmedUserDB?.isConfirmed).toBeTruthy();
     expect(mockEmailAdapter.sendMail).toHaveBeenCalledTimes(1);
     expect(usersServiceCreateSpy).toHaveBeenCalledTimes(1);
     expect(usersServiceConfirmByCodeSpy).toHaveBeenCalledTimes(1);
     expect(authServiceUpdateEmailConfirmationByUserIdSpy).not.toHaveBeenCalled();
-
-    usersServiceCreateSpy.mockRestore();
-    usersServiceConfirmByCodeSpy.mockRestore();
-    authServiceUpdateEmailConfirmationByUserIdSpy.mockRestore();
   });
 
   it('✅ 003 should resend a confirmation mail when a correct email passed; 005. POST /api/auth/registration-email-resending', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
-    const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
-    const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
-    const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
-      createAuthServiceUpdateEmailConfirmationByUserIdSpy();
-
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
-
-    const registerUserResult: Result<{ createdUserId: string }> = await AuthService.registerUser(
-      createUserData,
-      mockEmailAdapter
-    );
-
+    const registerUserResult: Result<{ createdUserId: string }> = await authService.registerUser(createUserData);
     const createdUserId: string = registerUserResult.data.createdUserId;
-    const createdUserDBBeforeResending: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const createdUserDBBeforeResending: UserDBType | null = await usersRepository.findById(createdUserId);
 
     const emailConfirmationDBBeforeResending: EmailConfirmationDBType | null =
-      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
+      await authRepository.findEmailConfirmationByUserId(createdUserId);
 
-    const resendConfirmationEmailResult: Result<{} | null> = await AuthService.resendConfirmationEmail(
-      createUserData.email,
-      mockEmailAdapter
+    const resendConfirmationEmailResult: Result<{} | null> = await authService.resendConfirmationEmail(
+      createUserData.email
     );
 
-    const createdUserDBAfterResending: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const createdUserDBAfterResending: UserDBType | null = await usersRepository.findById(createdUserId);
 
     const emailConfirmationDBAfterResending: EmailConfirmationDBType | null =
-      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
+      await authRepository.findEmailConfirmationByUserId(createdUserId);
 
     expect(createdUserDBBeforeResending?.isConfirmed).toBeFalsy();
     expect(createdUserDBAfterResending?.isConfirmed).toBeFalsy();
@@ -174,35 +163,20 @@ describe('Auth', () => {
       expect.stringMatching(validUUIDRegExp),
       emailExamples.completeRegistrationEmail
     );
-
-    usersServiceCreateSpy.mockRestore();
-    usersServiceConfirmByCodeSpy.mockRestore();
-    authServiceUpdateEmailConfirmationByUserIdSpy.mockRestore();
   });
 
   it('✅ 004 should confirm user registration after resending a confirmation email when a correct confirmation code passed; 004. POST /api/auth/registration-confirmation', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
-    const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
-    const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
-    const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
-      createAuthServiceUpdateEmailConfirmationByUserIdSpy();
-
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
-
-    const registerUserResult: Result<{ createdUserId: string }> = await AuthService.registerUser(
-      createUserData,
-      mockEmailAdapter
-    );
-
+    const registerUserResult: Result<{ createdUserId: string }> = await authService.registerUser(createUserData);
     const createdUserId: string = registerUserResult.data.createdUserId;
-    await AuthService.resendConfirmationEmail(createUserData.email, mockEmailAdapter);
+    await authService.resendConfirmationEmail(createUserData.email);
 
     const emailConfirmationDBAfterResending: EmailConfirmationDBType | null =
-      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
+      await authRepository.findEmailConfirmationByUserId(createdUserId);
 
     await confirmUserByCode(app, validUserAgents.userAgent_01, emailConfirmationDBAfterResending?.confirmationCode);
 
-    const confirmedUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const confirmedUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
     expect(confirmedUserDB?.isConfirmed).toBeTruthy();
     expect(mockEmailAdapter.sendMail).toHaveBeenCalledTimes(2);
     expect(usersServiceCreateSpy).toHaveBeenCalledTimes(1);
@@ -222,33 +196,14 @@ describe('Auth', () => {
       expect.stringMatching(validUUIDRegExp),
       emailExamples.completeRegistrationEmail
     );
-
-    usersServiceCreateSpy.mockRestore();
-    usersServiceConfirmByCodeSpy.mockRestore();
-    authServiceUpdateEmailConfirmationByUserIdSpy.mockRestore();
   });
 
   it('✅ 005 should send a recovery password mail when a correct email passed; 008. POST /api/auth/password-recovery', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
-
-    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
-      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
-
-    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
-      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
-
-    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
-      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
-
-    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
-    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
-    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
-
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
     const createdUserEmail: string = createdUser.email;
-    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -256,18 +211,15 @@ describe('Auth', () => {
       password: createUserData.password,
     });
 
-    const sendRecoveryPasswordCodeResult: Result<{}> = await AuthService.sendRecoveryPasswordCode(
-      createdUserEmail,
-      mockEmailAdapter
-    );
+    const sendRecoveryPasswordCodeResult: Result<{}> = await authService.sendRecoveryPasswordCode(createdUserEmail);
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
-      await UsersRepository.findById(createdUserId);
+      await usersRepository.findById(createdUserId);
 
-    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -299,27 +251,9 @@ describe('Auth', () => {
       expect.stringMatching(validUUIDRegExp),
       emailExamples.passwordRecoveryEmail
     );
-
-    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
-    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
-    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
-    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
-    authServiceDeleteRecoveryCodeSpy.mockRestore();
-    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
   });
 
   it('✅ 006 should set a new password when a valid body passed; 009. POST /api/auth/new-password', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
-
-    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
-      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
-
-    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
-      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
-
-    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
-      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
-
     const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
     const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
     const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
@@ -328,7 +262,7 @@ describe('Auth', () => {
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
     const createdUserEmail: string = createdUser.email;
-    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -336,18 +270,18 @@ describe('Auth', () => {
       password: createUserData.password,
     });
 
-    await AuthService.sendRecoveryPasswordCode(createdUserEmail, mockEmailAdapter);
+    await authService.sendRecoveryPasswordCode(createdUserEmail);
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(app, testUserAgent, {
       newPassword: validUserPasswords.password_01,
       recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode,
     });
 
-    const createdUserDBAfterSettingNewPassword: UserDBType | null = await UsersRepository.findById(createdUserId);
-    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
     await getSecurityDeviceList(app, testUserAgent, refreshToken, undefined, HttpStatuses.Unauthorized_401);
     expect(createdUserDB?.passwordHash).not.toBe(createdUserDBAfterSettingNewPassword?.passwordHash);
     expect(sessions).toBeInstanceOf(Array);
@@ -366,12 +300,5 @@ describe('Auth', () => {
       expect.stringMatching(validUUIDRegExp),
       emailExamples.passwordRecoveryEmail
     );
-
-    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
-    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
-    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
-    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
-    authServiceDeleteRecoveryCodeSpy.mockRestore();
-    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
   });
 });

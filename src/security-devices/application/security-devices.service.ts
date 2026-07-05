@@ -6,15 +6,14 @@ import { ResultStatuses } from '../../core/types/result/result-statuses';
 import { SecurityDeviceOutputDTO } from '../routes/output-dto/security-device.output-dto';
 import { mapToSecurityDeviceOutputDTO } from '../repositories/mappers/map-to-security-device-output-dto.util';
 import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 /*Сервис для работы с устройствами пользователей.*/
 @injectable()
 export class SecurityDevicesService {
   constructor(
-    @inject(SecurityDevicesRepository) private readonly securityDevicesRepository: SecurityDevicesRepository
-  ) {
-    this.securityDevicesRepository = securityDevicesRepository;
-  }
+    @inject(TYPES.SecurityDevicesRepository) private readonly securityDevicesRepository: SecurityDevicesRepository
+  ) {}
 
   /*Метод для добавления устройства пользователя.*/
   async create(securityDevice: SecurityDeviceType): Promise<Result<{ createdSecurityDeviceId: string }>> {

@@ -11,17 +11,15 @@ import { DeleteCommentByIdUriInputDTO } from './input-dto/uri/delete-comment-by-
 import { GetCommentByIdUriInputDTO } from './input-dto/uri/get-comment-by-id-uri.input-dto';
 import { CommentOutputDTO } from './output-dto/comment.output-dto';
 import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 /*Контроллер для работы с комментариями.*/
 @injectable()
 export class CommentsController {
   constructor(
-    @inject(CommentsService) private readonly commentsService: CommentsService,
-    @inject(CommentsQueryService) private readonly commentsQueryService: CommentsQueryService
-  ) {
-    this.commentsService = commentsService;
-    this.commentsQueryService = commentsQueryService;
-  }
+    @inject(TYPES.CommentsService) private readonly commentsService: CommentsService,
+    @inject(TYPES.CommentsQueryService) private readonly commentsQueryService: CommentsQueryService
+  ) {}
 
   /*Метод-обработчик для PUT-запросов по изменению комментария по ID, используя URI-параметры.*/
   async updateCommentByIdHandler(

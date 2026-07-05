@@ -1,16 +1,11 @@
 import { Router } from 'express';
 import { paginationValidationMiddleware } from '../../core/middlewares/validation/pagination-validation.middleware';
 import { inputValidationResultMiddleware } from '../../core/middlewares/validation/input-validation-result.middleware';
-import { basicAuthGuardMiddleware } from '../../auth/middlewares/guard-middlewares/basic-auth.guard-middleware';
 import { idValidation } from '../../core/middlewares/validation/params-id-validation.middlewares';
 import { UserSortFieldQueryInputDTO } from './input-dto/query/user-sort-field-query.input-dto';
 import { createUserInputValidation } from '../validation/users-input-validation.middlewares';
 import { SETTINGS } from '../../core/settings/settings';
-import { container } from '../../composition-root';
-import { UsersController } from './users.controller';
-
-/**/
-const usersController = container.get<UsersController>(UsersController);
+import { basicAuthGuardMiddleware, usersController } from '../../ioc/composition-root';
 
 /*Роутер из Express для работы с пользователями.*/
 export const usersRouter: Router = Router({});

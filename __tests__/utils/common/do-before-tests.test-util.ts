@@ -18,8 +18,11 @@ export const doBeforeTests = (): Express => {
     await clearDB(app);
   });
 
-  /*Указываем, что перед запуском каждого теста будет очищаться БД.*/
-  beforeEach(async () => await clearDB(app));
+  /*Указываем, что перед запуском каждого теста будут очищаться БД, моки и шпионы.*/
+  beforeEach(async () => {
+    await clearDB(app);
+    jest.clearAllMocks();
+  });
 
   /*Указываем, что после того как тестовый набор отработает, будет очищать и отключаться от БД.*/
   afterAll(async () => {
@@ -47,8 +50,11 @@ export const doBeforeTestsWithMongoMemoryServer = (): Express => {
     await db.dropDB();
   });
 
-  /*Указываем, что перед запуском каждого теста будет очищаться БД.*/
-  beforeEach(async () => await clearDB(app));
+  /*Указываем, что перед запуском каждого теста будут очищаться БД, моки и шпионы.*/
+  beforeEach(async () => {
+    await clearDB(app);
+    jest.clearAllMocks();
+  });
 
   /*Указываем, что после того как тестовый набор отработает, будет очищать и отключаться от БД.*/
   afterAll(async () => {
