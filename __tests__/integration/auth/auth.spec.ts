@@ -11,13 +11,29 @@ import { confirmUserByCode } from '../../utils/auth/confirm-user-by-code.test-ut
 import { Result } from '../../../src/core/types/result/result.type';
 import { createMockEmailAdapter } from '../../test-doubles/mocks';
 import {
+  createAuthRepositoryCreateRecoveryPasswordCodeDataSpy,
+  createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy,
+  createAuthServiceDeleteRecoveryCodeDataSpy,
+  createAuthServiceRevokeAllSessionsByUserIdSpy,
+  createAuthServiceUpdateEmailConfirmationByUserIdSpy,
+  createUsersRepositoryUpdatePasswordHashByIdSpy,
   createUsersServiceConfirmByCodeSpy,
   createUsersServiceCreateSpy,
-  createAuthServiceUpdateEmailConfirmationByUserIdSpy,
+  createUsersServiceUpdatePasswordByRecoveryCodeSpy,
 } from '../../test-doubles/spies';
 import { validUserAgents, validUUIDRegExp } from '../../test-data/auth.test-data';
 import { EmailConfirmationDBType } from '../../../src/auth/repositories/types/email-сonfirmation-db.type';
 import { authRepository } from '../../../src/auth/repositories/auth.repository';
+import { UserOutputDTO } from '../../../src/users/routes/output-dto/user.output-dto';
+import { createUser } from '../../utils/users/create-user.test-util';
+import { RecoveryCodeDataDBType } from '../../../src/auth/repositories/types/recovery-code-data-db.type';
+import { SessionDBType } from '../../../src/auth/repositories/types/session-db.type';
+import { setNewPasswordByRecoveryCode } from '../../utils/auth/set-new-password-by-recovery-code.test-util';
+import { validUserPasswords } from '../../test-data/users.test-data';
+import { SecurityDeviceListOutputDTO } from '../../../src/security-devices/routes/output-dto/security-device-list.output-dto';
+import { getSecurityDeviceList } from '../../utils/security-devices/get-security-device-list.test-util';
+import { loginUserReturnAccessAndRefreshTokens } from '../../utils/auth/login-user-return-access-and-refresh-tokens.test-util';
+import { HttpStatuses } from '../../../src/core/types/http-statuses';
 
 describe('Auth', () => {
   const app = doBeforeTestsWithMongoMemoryServer();
@@ -210,5 +226,152 @@ describe('Auth', () => {
     usersServiceCreateSpy.mockRestore();
     usersServiceConfirmByCodeSpy.mockRestore();
     authServiceUpdateEmailConfirmationByUserIdSpy.mockRestore();
+  });
+
+  it('✅ 005 should send a recovery password mail when a correct email passed; 008. POST /api/auth/password-recovery', async () => {
+    const mockEmailAdapter: jest.Mocked<typeof nodemailerAdapter> = createMockEmailAdapter();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserEmail: string = createdUser.email;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    const sendRecoveryPasswordCodeResult: Result<{}> = await authService.sendRecoveryPasswordCode(
+      createdUserEmail,
+      mockEmailAdapter
+    );
+
+    const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
+      await usersRepository.findById(createdUserId);
+
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSendingRecoveryPasswordCode?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(recoveryPasswordCodeDataDB).not.toBeNull();
+    expect(typeof recoveryPasswordCodeDataDB?.recoveryCode).toBe('string');
+    expect(recoveryPasswordCodeDataDB?.userId).toBe(createdUserId);
+    expect(sendRecoveryPasswordCodeResult.status).toBe(ResultStatuses.NoContent);
+    expect(sendRecoveryPasswordCodeResult.extensions).toBeInstanceOf(Array);
+    expect(mockEmailAdapter.sendMail).toHaveBeenCalledTimes(1);
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).toHaveBeenCalledTimes(1);
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).toHaveBeenCalledTimes(1);
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    expect(mockEmailAdapter.sendMail).toHaveBeenCalledWith(
+      createdUserEmail,
+      'Recover Password',
+      expect.stringMatching(validUUIDRegExp),
+      emailExamples.passwordRecoveryEmail
+    );
+
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  });
+
+  it('✅ 006 should set a new password when a valid body passed; 009. POST /api/auth/new-password', async () => {
+    const mockEmailAdapter: jest.Mocked<typeof nodemailerAdapter> = createMockEmailAdapter();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserEmail: string = createdUser.email;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    await authService.sendRecoveryPasswordCode(createdUserEmail, mockEmailAdapter);
+
+    const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    await setNewPasswordByRecoveryCode(app, testUserAgent, {
+      newPassword: validUserPasswords.password_01,
+      recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode,
+    });
+
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    await getSecurityDeviceList(app, testUserAgent, refreshToken, undefined, HttpStatuses.Unauthorized_401);
+    expect(createdUserDB?.passwordHash).not.toBe(createdUserDBAfterSettingNewPassword?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(0);
+    expect(mockEmailAdapter.sendMail).toHaveBeenCalledTimes(1);
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).toHaveBeenCalledTimes(1);
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).toHaveBeenCalledTimes(1);
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).toHaveBeenCalledTimes(1);
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).toHaveBeenCalledTimes(1);
+    expect(authServiceDeleteRecoveryCodeSpy).toHaveBeenCalledTimes(1);
+    expect(authServiceRevokeAllSessionsByUserIdSpy).toHaveBeenCalledTimes(1);
+
+    expect(mockEmailAdapter.sendMail).toHaveBeenCalledWith(
+      createdUserEmail,
+      'Recover Password',
+      expect.stringMatching(validUUIDRegExp),
+      emailExamples.passwordRecoveryEmail
+    );
+
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
   });
 });

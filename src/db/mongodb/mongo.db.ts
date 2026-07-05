@@ -8,7 +8,7 @@ import { SessionType } from '../../auth/application/types/session.type';
 import { SecurityDeviceType } from '../../security-devices/application/types/security-device.type';
 import { RequestRateLimitLogType } from '../../auth/application/types/request-rate-limit-log.type';
 import { EmailConfirmationType } from '../../auth/application/types/email-сonfirmation.type';
-import { RecoveryCodeType } from '../../auth/application/types/recovery-code.type';
+import { RecoveryCodeDataType } from '../../auth/application/types/recovery-code-data.type';
 
 /*Объект для работы с MongoDB.*/
 export const db = {
@@ -27,7 +27,7 @@ export const db = {
   sessionsCollection: {} as Collection<SessionType>,
   securityDevicesCollection: {} as Collection<SecurityDeviceType>,
   requestRateLimitLogsCollection: {} as Collection<RequestRateLimitLogType>,
-  recoveryPasswordCodesCollection: {} as Collection<RecoveryCodeType>,
+  recoveryPasswordCodesDataCollection: {} as Collection<RecoveryCodeDataType>,
 
   /*Метод для подключения к серверу MongoDB.*/
   async runDB(url: string, dbName: string): Promise<void> {
@@ -74,11 +74,11 @@ export const db = {
       /*Используем составной индекс, чтобы ускорить работу метода "countDocuments()".*/
       await this.requestRateLimitLogsCollection.createIndex({ ip: 1, url: 1, timestamp: -1 });
 
-      this.recoveryPasswordCodesCollection = this.db.collection<RecoveryCodeType>(
-        SETTINGS.RECOVERY_PASSWORD_CODES_COLLECTION_NAME
+      this.recoveryPasswordCodesDataCollection = this.db.collection<RecoveryCodeDataType>(
+        SETTINGS.RECOVERY_PASSWORD_CODES_DATA_COLLECTION_NAME
       );
 
-      await this.recoveryPasswordCodesCollection.createIndex(
+      await this.recoveryPasswordCodesDataCollection.createIndex(
         { expirationDate: 1 },
         { expireAfterSeconds: SETTINGS.PASSWORD_RECOVERY_CODE_EXPIRATION_TIME_IN_DB_IN_SECONDS }
       );

@@ -14,13 +14,21 @@ import { usersRepository } from '../../../src/users/repositories/users.repositor
 import { confirmUserByCode } from '../../utils/auth/confirm-user-by-code.test-util';
 import { resendConfirmationEmail } from '../../utils/auth/resend-confirmation-email.test-util';
 import {
+  createAuthRepositoryCreateRecoveryPasswordCodeDataSpy,
+  createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy,
+  createAuthServiceDeleteRecoveryCodeDataSpy,
+  createAuthServiceRevokeAllSessionsByUserIdSpy,
+  createAuthServiceUpdateEmailConfirmationByUserIdSpy,
+  createUsersRepositoryUpdatePasswordHashByIdSpy,
   createUsersServiceConfirmByCodeSpy,
   createUsersServiceCreateSpy,
-  createAuthServiceUpdateEmailConfirmationByUserIdSpy,
+  createUsersServiceUpdatePasswordByRecoveryCodeSpy,
 } from '../../test-doubles/spies';
 import {
+  expiredRecoveryCodeData,
   expiredUserEmailConfirmationData,
   invalidConfirmationCodes,
+  invalidRecoveryCodes,
   invalidUserAgents,
   validUserAgents,
   validUUIDs,
@@ -31,6 +39,7 @@ import {
   invalidUserPasswords,
   validUserEmails,
   validUserLogins,
+  validUserPasswords,
 } from '../../test-data/users.test-data';
 import { delay } from '../../utils/common/delay.test-util';
 import { setTimeout } from 'timers/promises';
@@ -38,6 +47,13 @@ import { createNodemailerAdapterSendMailSpyAndMock } from '../../test-doubles/sp
 import { EmailConfirmationDBType } from '../../../src/auth/repositories/types/email-сonfirmation-db.type';
 import { authRepository } from '../../../src/auth/repositories/auth.repository';
 import { authService } from '../../../src/auth/application/auth.service';
+import { loginUserReturnAccessAndRefreshTokens } from '../../utils/auth/login-user-return-access-and-refresh-tokens.test-util';
+import { RecoveryCodeDataDBType } from '../../../src/auth/repositories/types/recovery-code-data-db.type';
+import { SessionDBType } from '../../../src/auth/repositories/types/session-db.type';
+import { SecurityDeviceListOutputDTO } from '../../../src/security-devices/routes/output-dto/security-device-list.output-dto';
+import { getSecurityDeviceList } from '../../utils/security-devices/get-security-device-list.test-util';
+import { sendRecoveryPasswordCode } from '../../utils/auth/send-recovery-password-code.test-util';
+import { setNewPasswordByRecoveryCode } from '../../utils/auth/set-new-password-by-recovery-code.test-util';
 
 describe('Auth Validation', () => {
   const app = doBeforeTestsWithMongoMemoryServer();
@@ -46,6 +62,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -249,6 +266,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -285,6 +303,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -312,6 +331,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -336,6 +356,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -411,6 +432,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -511,6 +533,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -544,6 +567,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpy: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -571,6 +595,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpy: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -617,6 +642,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpy: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -656,6 +682,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -691,6 +718,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -728,6 +756,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -772,6 +801,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpy: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -840,6 +870,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpy: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -871,6 +902,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpy: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -898,6 +930,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpy: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -944,6 +977,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpy: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -984,6 +1018,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpy: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -1021,6 +1056,7 @@ describe('Auth Validation', () => {
     const nodemailerAdapterSendMailSpy: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
+
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
@@ -1050,5 +1086,1069 @@ describe('Auth Validation', () => {
     usersServiceCreateSpy.mockRestore();
     usersServiceConfirmByCodeSpy.mockRestore();
     authServiceUpdateEmailConfirmationByUserIdSpy.mockRestore();
+  }, 15000);
+
+  it('❌ 021 should not send a recovery password mail when an invalid email passed; 008. POST /api/auth/password-recovery', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+    const testStatus: HttpStatuses = HttpStatuses.BadRequest_400;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    const sendRecoveryPasswordCodeResponse_01: any = await sendRecoveryPasswordCode(
+      app,
+      testUserAgent,
+      { email: invalidUserEmails.email_01 },
+      testStatus
+    );
+
+    const sendRecoveryPasswordCodeResponse_02: any = await sendRecoveryPasswordCode(
+      app,
+      testUserAgent,
+      { email: invalidUserEmails.email_02 },
+      testStatus
+    );
+
+    const sendRecoveryPasswordCodeResponse_03: any = await sendRecoveryPasswordCode(
+      app,
+      testUserAgent,
+      { email: invalidUserEmails.email_03 },
+      testStatus
+    );
+
+    const sendRecoveryPasswordCodeResponse_04: any = await sendRecoveryPasswordCode(
+      app,
+      testUserAgent,
+      { email: invalidUserEmails.email_04 },
+      testStatus
+    );
+
+    const sendRecoveryPasswordCodeResponse_05: any = await sendRecoveryPasswordCode(
+      app,
+      testUserAgent,
+      { email: invalidUserEmails.email_05 },
+      testStatus
+    );
+
+    const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
+      await usersRepository.findById(createdUserId);
+
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSendingRecoveryPasswordCode?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(recoveryPasswordCodeDataDB).toBeNull();
+    expect(sendRecoveryPasswordCodeResponse_01.errorsMessages[0].field).toBe('email');
+    expect(sendRecoveryPasswordCodeResponse_01.errorsMessages[0].message).toBe('Field "email" must not be empty');
+    expect(sendRecoveryPasswordCodeResponse_02.errorsMessages[0].field).toBe('email');
+    expect(sendRecoveryPasswordCodeResponse_02.errorsMessages[0].message).toBe('Field "email" must not be empty');
+    expect(sendRecoveryPasswordCodeResponse_03.errorsMessages[0].field).toBe('email');
+    expect(sendRecoveryPasswordCodeResponse_03.errorsMessages[0].message).toBe('Field "email" is invalid');
+    expect(sendRecoveryPasswordCodeResponse_04.errorsMessages[0].field).toBe('email');
+    expect(sendRecoveryPasswordCodeResponse_04.errorsMessages[0].message).toBe('Field "email" is invalid');
+    expect(sendRecoveryPasswordCodeResponse_05.errorsMessages[0].field).toBe('email');
+    expect(sendRecoveryPasswordCodeResponse_05.errorsMessages[0].message).toBe('Field "email" must be a string');
+
+    expect(nodemailerAdapterSendMailSpyAndMock).not.toHaveBeenCalled();
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).not.toHaveBeenCalled();
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).not.toHaveBeenCalled();
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  });
+
+  it('❌ 022 should not send a recovery password mail when an incorrect email passed; 008. POST /api/auth/password-recovery', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: validUserEmails.email_01 });
+
+    const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
+      await usersRepository.findById(createdUserId);
+
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSendingRecoveryPasswordCode?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(recoveryPasswordCodeDataDB).toBeNull();
+    expect(nodemailerAdapterSendMailSpyAndMock).not.toHaveBeenCalled();
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).not.toHaveBeenCalled();
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).not.toHaveBeenCalled();
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  });
+
+  it('❌ 023 should not send a recovery password mail when an invalid user agent passed; 008. POST /api/auth/password-recovery', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    const testStatus: HttpStatuses = HttpStatuses.Unauthorized_401;
+
+    await sendRecoveryPasswordCode(app, invalidUserAgents.userAgent_01, createUserData.email, testStatus);
+    await sendRecoveryPasswordCode(app, invalidUserAgents.userAgent_02, createUserData.email, testStatus);
+
+    const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
+      await usersRepository.findById(createdUserId);
+
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSendingRecoveryPasswordCode?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(recoveryPasswordCodeDataDB).toBeNull();
+    expect(nodemailerAdapterSendMailSpyAndMock).not.toHaveBeenCalled();
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).not.toHaveBeenCalled();
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).not.toHaveBeenCalled();
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  });
+
+  it('❌ 024 should not send a recovery password mail when a user agent not passed; 008. POST /api/auth/password-recovery', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    const testStatus: HttpStatuses = HttpStatuses.Unauthorized_401;
+
+    await sendRecoveryPasswordCode(app, testUserAgent, createUserData.email, testStatus, true);
+
+    const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
+      await usersRepository.findById(createdUserId);
+
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSendingRecoveryPasswordCode?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(recoveryPasswordCodeDataDB).toBeNull();
+    expect(nodemailerAdapterSendMailSpyAndMock).not.toHaveBeenCalled();
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).not.toHaveBeenCalled();
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).not.toHaveBeenCalled();
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  });
+
+  it('❌ 025 should not send a recovery password mail when more than 5 requests to the same URL during the last 10 seconds have been made; 008. POST /api/auth/password-recovery', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    const testStatus: HttpStatuses = HttpStatuses.TooManyRequest_429;
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email }, testStatus);
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email }, testStatus);
+    await delay(5000);
+    await setTimeout(5000);
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
+      await usersRepository.findById(createdUserId);
+
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSendingRecoveryPasswordCode?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(recoveryPasswordCodeDataDB).not.toBeNull();
+    expect(typeof recoveryPasswordCodeDataDB?.recoveryCode).toBe('string');
+    expect(recoveryPasswordCodeDataDB?.userId).toBe(createdUserId);
+    expect(nodemailerAdapterSendMailSpyAndMock).toHaveBeenCalledTimes(6);
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).toHaveBeenCalledTimes(6);
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).toHaveBeenCalledTimes(6);
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  }, 15000);
+
+  it('❌ 026 should not set a new password when an invalid body passed; 009. POST /api/auth/new-password', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    const testStatus: HttpStatuses = HttpStatuses.BadRequest_400;
+
+    const setNewPasswordByRecoveryCodeResponse_01: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: invalidUserPasswords.password_01, recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_02: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      {
+        newPassword: invalidUserPasswords.password_02,
+        recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode,
+      },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_03: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: invalidUserPasswords.password_03, recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_04: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: invalidUserPasswords.password_04, recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_05: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: invalidUserPasswords.password_05, recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode },
+      testStatus
+    );
+
+    await delay(5000);
+    await setTimeout(5000);
+
+    const setNewPasswordByRecoveryCodeResponse_06: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: invalidUserPasswords.password_06, recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_07: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: invalidRecoveryCodes.code_01 },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_08: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: invalidRecoveryCodes.code_02 },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_09: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: invalidRecoveryCodes.code_03 },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_10: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: invalidRecoveryCodes.code_04 },
+      testStatus
+    );
+
+    await delay(5000);
+    await setTimeout(5000);
+
+    const setNewPasswordByRecoveryCodeResponse_11: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: invalidRecoveryCodes.code_05 },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_12: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: invalidRecoveryCodes.code_06 },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_13: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: invalidRecoveryCodes.code_07 },
+      testStatus
+    );
+
+    const setNewPasswordByRecoveryCodeResponse_14: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: invalidRecoveryCodes.code_08 },
+      testStatus
+    );
+
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSettingNewPassword?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(setNewPasswordByRecoveryCodeResponse_01.errorsMessages[0].field).toBe('newPassword');
+
+    expect(setNewPasswordByRecoveryCodeResponse_01.errorsMessages[0].message).toBe(
+      'Field "newPassword" must not be empty'
+    );
+
+    expect(setNewPasswordByRecoveryCodeResponse_02.errorsMessages[0].field).toBe('newPassword');
+
+    expect(setNewPasswordByRecoveryCodeResponse_02.errorsMessages[0].message).toBe(
+      'Field "newPassword" must not be empty'
+    );
+
+    expect(setNewPasswordByRecoveryCodeResponse_03.errorsMessages[0].field).toBe('newPassword');
+
+    expect(setNewPasswordByRecoveryCodeResponse_03.errorsMessages[0].message).toBe(
+      'Field "newPassword" must be between 6 and 20 characters'
+    );
+
+    expect(setNewPasswordByRecoveryCodeResponse_04.errorsMessages[0].field).toBe('newPassword');
+
+    expect(setNewPasswordByRecoveryCodeResponse_04.errorsMessages[0].message).toBe(
+      'Field "newPassword" must be between 6 and 20 characters'
+    );
+
+    expect(setNewPasswordByRecoveryCodeResponse_05.errorsMessages[0].field).toBe('newPassword');
+
+    expect(setNewPasswordByRecoveryCodeResponse_05.errorsMessages[0].message).toBe(
+      'Field "newPassword" must be between 6 and 20 characters'
+    );
+
+    expect(setNewPasswordByRecoveryCodeResponse_06.errorsMessages[0].field).toBe('newPassword');
+
+    expect(setNewPasswordByRecoveryCodeResponse_06.errorsMessages[0].message).toBe(
+      'Field "newPassword" must be a string'
+    );
+
+    expect(setNewPasswordByRecoveryCodeResponse_07.errorsMessages[0].field).toBe('recoveryCode');
+
+    expect(setNewPasswordByRecoveryCodeResponse_07.errorsMessages[0].message).toBe(
+      'Field "recoveryCode" must not be empty'
+    );
+
+    expect(setNewPasswordByRecoveryCodeResponse_08.errorsMessages[0].field).toBe('recoveryCode');
+
+    expect(setNewPasswordByRecoveryCodeResponse_08.errorsMessages[0].message).toBe(
+      'Field "recoveryCode" must not be empty'
+    );
+
+    expect(setNewPasswordByRecoveryCodeResponse_09.errorsMessages[0].field).toBe('recoveryCode');
+    expect(setNewPasswordByRecoveryCodeResponse_09.errorsMessages[0].message).toBe('Field "recoveryCode" is invalid');
+    expect(setNewPasswordByRecoveryCodeResponse_10.errorsMessages[0].field).toBe('recoveryCode');
+    expect(setNewPasswordByRecoveryCodeResponse_10.errorsMessages[0].message).toBe('Field "recoveryCode" is invalid');
+    expect(setNewPasswordByRecoveryCodeResponse_11.errorsMessages[0].field).toBe('recoveryCode');
+    expect(setNewPasswordByRecoveryCodeResponse_11.errorsMessages[0].message).toBe('Field "recoveryCode" is invalid');
+    expect(setNewPasswordByRecoveryCodeResponse_12.errorsMessages[0].field).toBe('recoveryCode');
+
+    expect(setNewPasswordByRecoveryCodeResponse_12.errorsMessages[0].message).toBe(
+      'Field "recoveryCode" must be a string'
+    );
+
+    expect(setNewPasswordByRecoveryCodeResponse_13.errorsMessages[0].field).toBe('recoveryCode');
+    expect(setNewPasswordByRecoveryCodeResponse_13.errorsMessages[0].message).toBe('Field "recoveryCode" is required');
+    expect(setNewPasswordByRecoveryCodeResponse_14.errorsMessages[0].field).toBe('recoveryCode');
+
+    expect(setNewPasswordByRecoveryCodeResponse_14.errorsMessages[0].message).toBe(
+      'Field "recoveryCode" must be a string'
+    );
+
+    expect(nodemailerAdapterSendMailSpyAndMock).toHaveBeenCalledTimes(1);
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).toHaveBeenCalledTimes(1);
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).toHaveBeenCalledTimes(1);
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  }, 35000);
+
+  it('❌ 027 should not set a new password when an incorrect recovery code passed; 009. POST /api/auth/new-password', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const setNewPasswordByRecoveryCodeResponse: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: validUUIDs.uuid_01 },
+      HttpStatuses.BadRequest_400
+    );
+
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSettingNewPassword?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(setNewPasswordByRecoveryCodeResponse.errorsMessages[0].field).toBe('recoveryCode');
+    expect(setNewPasswordByRecoveryCodeResponse.errorsMessages[0].message).toBe('Field "recoveryCode" is invalid');
+    expect(nodemailerAdapterSendMailSpyAndMock).toHaveBeenCalledTimes(1);
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).toHaveBeenCalledTimes(1);
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).toHaveBeenCalledTimes(1);
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  });
+
+  it('❌ 028 should not set a new password when an expired recovery code passed; 009. POST /api/auth/new-password', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    await authRepository.createRecoveryPasswordCodeData(
+      createdUserId,
+      expiredRecoveryCodeData.recoveryCode,
+      expiredRecoveryCodeData.expirationDate
+    );
+
+    const setNewPasswordByRecoveryCodeResponse: any = await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: expiredRecoveryCodeData.recoveryCode },
+      HttpStatuses.BadRequest_400
+    );
+
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSettingNewPassword?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(setNewPasswordByRecoveryCodeResponse.errorsMessages[0].field).toBe('recoveryCode');
+    expect(setNewPasswordByRecoveryCodeResponse.errorsMessages[0].message).toBe('Recovery code is expired');
+    expect(nodemailerAdapterSendMailSpyAndMock).not.toHaveBeenCalled();
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).not.toHaveBeenCalled();
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).toHaveBeenCalledTimes(1);
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  });
+
+  it('❌ 029 should not set a new password when an invalid user agent passed; 009. POST /api/auth/new-password', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    const testStatus: HttpStatuses = HttpStatuses.Unauthorized_401;
+
+    await setNewPasswordByRecoveryCode(
+      app,
+      invalidUserAgents.userAgent_01,
+      { newPassword: validUserPasswords.password_01, recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode },
+      testStatus
+    );
+
+    await setNewPasswordByRecoveryCode(
+      app,
+      invalidUserAgents.userAgent_02,
+      { newPassword: validUserPasswords.password_01, recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode },
+      testStatus
+    );
+
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSettingNewPassword?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(nodemailerAdapterSendMailSpyAndMock).toHaveBeenCalledTimes(1);
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).toHaveBeenCalledTimes(1);
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).toHaveBeenCalledTimes(1);
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  });
+
+  it('❌ 030 should not set a new password when a user agent not passed; 009. POST /api/auth/new-password', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode },
+      HttpStatuses.Unauthorized_401,
+      true
+    );
+
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+
+    const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
+      app,
+      testUserAgent,
+      refreshToken
+    );
+
+    expect(createdUserDB?.passwordHash).toBe(createdUserDBAfterSettingNewPassword?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(1);
+    expect(getSecurityDeviceListResponse).toBeInstanceOf(Array);
+    expect(getSecurityDeviceListResponse.length).toBe(1);
+    expect(nodemailerAdapterSendMailSpyAndMock).toHaveBeenCalledTimes(1);
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).toHaveBeenCalledTimes(1);
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).toHaveBeenCalledTimes(1);
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).not.toHaveBeenCalled();
+    expect(authServiceDeleteRecoveryCodeSpy).not.toHaveBeenCalled();
+    expect(authServiceRevokeAllSessionsByUserIdSpy).not.toHaveBeenCalled();
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
+  });
+
+  it('❌ 031 should not set a new password when more than 5 requests to the same URL during the last 10 seconds have been made; 009. POST /api/auth/new-password', async () => {
+    const nodemailerAdapterSendMailSpyAndMock: jest.SpyInstance = createNodemailerAdapterSendMailSpyAndMock();
+
+    const authRepositoryCreateRecoveryPasswordCodeSpy: jest.SpyInstance =
+      createAuthRepositoryCreateRecoveryPasswordCodeDataSpy();
+
+    const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
+      createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
+
+    const usersServiceUpdatePasswordByRecoveryCodeSpy: jest.SpyInstance =
+      createUsersServiceUpdatePasswordByRecoveryCodeSpy();
+
+    const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
+    const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
+    const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
+
+    const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
+    const createdUser: UserOutputDTO = await createUser(app, createUserData);
+    const createdUserId: string = createdUser.id;
+    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const testUserAgent: string = validUserAgents.userAgent_01;
+
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
+    const testStatus: HttpStatuses = HttpStatuses.TooManyRequest_429;
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const recoveryPasswordCodeDataDB_01: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    await setNewPasswordByRecoveryCode(app, testUserAgent, {
+      newPassword: validUserPasswords.password_01,
+      recoveryCode: recoveryPasswordCodeDataDB_01?.recoveryCode,
+    });
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const recoveryPasswordCodeDataDB_02: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    await setNewPasswordByRecoveryCode(app, testUserAgent, {
+      newPassword: validUserPasswords.password_01,
+      recoveryCode: recoveryPasswordCodeDataDB_02?.recoveryCode,
+    });
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const recoveryPasswordCodeDataDB_03: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    await setNewPasswordByRecoveryCode(app, testUserAgent, {
+      newPassword: validUserPasswords.password_01,
+      recoveryCode: recoveryPasswordCodeDataDB_03?.recoveryCode,
+    });
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const recoveryPasswordCodeDataDB_04: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    await setNewPasswordByRecoveryCode(app, testUserAgent, {
+      newPassword: validUserPasswords.password_01,
+      recoveryCode: recoveryPasswordCodeDataDB_04?.recoveryCode,
+    });
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const recoveryPasswordCodeDataDB_05: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    await setNewPasswordByRecoveryCode(app, testUserAgent, {
+      newPassword: validUserPasswords.password_01,
+      recoveryCode: recoveryPasswordCodeDataDB_05?.recoveryCode,
+    });
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email }, testStatus);
+
+    const recoveryPasswordCodeDataDB_06: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: recoveryPasswordCodeDataDB_06?.recoveryCode },
+      testStatus
+    );
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email }, testStatus);
+
+    const recoveryPasswordCodeDataDB_07: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    await setNewPasswordByRecoveryCode(
+      app,
+      testUserAgent,
+      { newPassword: validUserPasswords.password_01, recoveryCode: recoveryPasswordCodeDataDB_07?.recoveryCode },
+      testStatus
+    );
+
+    await delay(5000);
+    await setTimeout(5000);
+
+    await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
+
+    const recoveryPasswordCodeDataDB_08: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+
+    await setNewPasswordByRecoveryCode(app, testUserAgent, {
+      newPassword: validUserPasswords.password_01,
+      recoveryCode: recoveryPasswordCodeDataDB_08?.recoveryCode,
+    });
+
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    await getSecurityDeviceList(app, testUserAgent, refreshToken, undefined, HttpStatuses.Unauthorized_401);
+    expect(createdUserDB?.passwordHash).not.toBe(createdUserDBAfterSettingNewPassword?.passwordHash);
+    expect(sessions).toBeInstanceOf(Array);
+    expect(sessions.length).toBe(0);
+    expect(nodemailerAdapterSendMailSpyAndMock).toHaveBeenCalledTimes(6);
+    expect(authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy).toHaveBeenCalledTimes(6);
+    expect(authRepositoryCreateRecoveryPasswordCodeSpy).toHaveBeenCalledTimes(6);
+    expect(usersServiceUpdatePasswordByRecoveryCodeSpy).toHaveBeenCalledTimes(6);
+    expect(usersRepositoryUpdatePasswordHashByIdSpy).toHaveBeenCalledTimes(6);
+    expect(authServiceDeleteRecoveryCodeSpy).toHaveBeenCalledTimes(6);
+    expect(authServiceRevokeAllSessionsByUserIdSpy).toHaveBeenCalledTimes(6);
+
+    nodemailerAdapterSendMailSpyAndMock.mockRestore();
+    authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy.mockRestore();
+    authRepositoryCreateRecoveryPasswordCodeSpy.mockRestore();
+    usersServiceUpdatePasswordByRecoveryCodeSpy.mockRestore();
+    usersRepositoryUpdatePasswordHashByIdSpy.mockRestore();
+    authServiceDeleteRecoveryCodeSpy.mockRestore();
+    authServiceRevokeAllSessionsByUserIdSpy.mockRestore();
   }, 15000);
 });

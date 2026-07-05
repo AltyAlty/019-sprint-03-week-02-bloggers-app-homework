@@ -62,7 +62,7 @@ export const SETTINGS = {
   SESSIONS_COLLECTION_NAME: 'sessions',
   SECURITY_DEVICES_COLLECTION_NAME: 'securityDevices',
   REQUEST_RATE_LIMIT_LOGS_COLLECTION_NAME: 'requestRateLimitLogs',
-  RECOVERY_PASSWORD_CODES_COLLECTION_NAME: 'recoveryPasswordCodes',
+  RECOVERY_PASSWORD_CODES_DATA_COLLECTION_NAME: 'recoveryPasswordCodesData',
 
   DEFAULT_PAGINATION_PAGE_NUMBER: 1,
   DEFAULT_PAGINATION_PAGE_SIZE: 10,
@@ -76,8 +76,6 @@ export const SETTINGS = {
   AT_TIME: process.env.AT_TIME,
   RT_SECRET: process.env.RT_SECRET,
   RT_TIME: process.env.RT_TIME,
-  RT_TIME_DATE_FNS: { seconds: Number(process.env.RT_TIME_DATE_FNS) }, // не используется
-  RT_TTL: Number(process.env.RT_TTL), // не используется
 
   EMAIL: process.env.EMAIL,
   EMAIL_PASS: process.env.EMAIL_PASS,

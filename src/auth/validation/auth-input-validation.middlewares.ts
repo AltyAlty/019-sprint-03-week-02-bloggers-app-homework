@@ -3,13 +3,13 @@ import { usersRepository } from '../../users/repositories/users.repository';
 import { UserDBType } from '../../users/repositories/types/user-db.type';
 import { EmailConfirmationDBType } from '../repositories/types/email-сonfirmation-db.type';
 import { authRepository } from '../repositories/auth.repository';
-import { RecoveryCodeDBType } from '../repositories/types/recovery-code-db.type';
+import { RecoveryCodeDataDBType } from '../repositories/types/recovery-code-data-db.type';
 
 const loginOrEmailValidation: ValidationChain = body('loginOrEmail')
   .exists()
   .withMessage('Field "loginOrEmail" is required')
   .isString()
-  .withMessage('field "loginOrEmail" must be a string')
+  .withMessage('Field "loginOrEmail" must be a string')
   .trim()
   .notEmpty()
   .withMessage('Field "loginOrEmail" must not be empty');
@@ -53,17 +53,19 @@ const recoveryCodeValidation: ValidationChain = body('recoveryCode')
   .exists()
   .withMessage('Field "recoveryCode" is required')
   .isString()
-  .withMessage('field "recoveryCode" must be a string')
+  .withMessage('Field "recoveryCode" must be a string')
   .trim()
   .notEmpty()
   .withMessage('Field "recoveryCode" must not be empty')
   .matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
   .withMessage('Field "recoveryCode" is invalid')
-  .custom(async (code: string) => {
-    const recoveryCodeDB: RecoveryCodeDBType | null = await authRepository.findRecoveryPasswordCode(code);
-    if (!recoveryCodeDB) throw new Error('Field "recoveryCode" is invalid');
-    if (recoveryCodeDB.expirationDate <= new Date()) throw new Error('Recovery code is expired');
-    const userDB: UserDBType | null = await usersRepository.findById(recoveryCodeDB.userId);
+  .custom(async (recoveryCode: string) => {
+    const recoveryCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByCode(recoveryCode);
+
+    if (!recoveryCodeDataDB) throw new Error('Field "recoveryCode" is invalid');
+    if (recoveryCodeDataDB.expirationDate <= new Date()) throw new Error('Recovery code is expired');
+    const userDB: UserDBType | null = await usersRepository.findById(recoveryCodeDataDB.userId);
     if (!userDB) throw new Error('Field "recoveryCode" is invalid');
     return true;
   });

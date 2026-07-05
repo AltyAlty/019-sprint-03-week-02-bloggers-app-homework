@@ -28,9 +28,13 @@ describe('Security Devices API Validation', () => {
   it('❌ 001 should not return a list of security devices when an invalid refresh token passed; 001. GET /api/security/devices', async () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     await createUser(app, createUserData);
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
-    await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, loginUserData);
+
+    await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
     const testStatus: HttpStatuses = HttpStatuses.Unauthorized_401;
 
     await getSecurityDeviceList(app, testUserAgent, invalidRefreshTokens.RT_01, undefined, testStatus);
@@ -47,9 +51,12 @@ describe('Security Devices API Validation', () => {
   it('❌ 002 should not return a list of security devices when an incorrect refresh token passed; 001. GET /api/security/devices', async () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     await createUser(app, createUserData);
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
-    await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, loginUserData);
+
+    await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     await getSecurityDeviceList(app, testUserAgent, validRefreshTokens.RT_01, undefined, HttpStatuses.Unauthorized_401);
   });
@@ -57,12 +64,11 @@ describe('Security Devices API Validation', () => {
   it('❌ 003 should not return a list of security devices when an invalid user agent passed; 001. GET /api/security/devices', async () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     await createUser(app, createUserData);
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
       app,
       validUserAgents.userAgent_01,
-      loginUserData
+      { loginOrEmail: createUserData.login, password: createUserData.password }
     );
 
     const testStatus: HttpStatuses = HttpStatuses.Unauthorized_401;
@@ -74,14 +80,12 @@ describe('Security Devices API Validation', () => {
   it('❌ 004 should not return a list of security devices when a user agent not passed; 001. GET /api/security/devices', async () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     await createUser(app, createUserData);
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
-    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
-      app,
-      testUserAgent,
-      loginUserData
-    );
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     await getSecurityDeviceList(app, testUserAgent, refreshToken, undefined, HttpStatuses.Unauthorized_401, true);
   });

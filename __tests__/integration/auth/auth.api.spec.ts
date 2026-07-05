@@ -28,7 +28,6 @@ describe('Auth API', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const {
@@ -43,7 +42,10 @@ describe('Auth API', () => {
       hasHttpOnly: boolean;
       hasSecure: boolean;
       hasPath: boolean;
-    } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, loginUserData);
+    } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const verifiedAccessTokenPayload: { userId: string } | null = await jwtAdapter.verifyAccessToken(
       accessToken,
@@ -138,7 +140,6 @@ describe('Auth API', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.email, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const {
@@ -153,7 +154,10 @@ describe('Auth API', () => {
       hasHttpOnly: boolean;
       hasSecure: boolean;
       hasPath: boolean;
-    } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, loginUserData);
+    } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const verifiedAccessTokenPayload: { userId: string } | null = await jwtAdapter.verifyAccessToken(
       accessToken,
@@ -248,17 +252,15 @@ describe('Auth API', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const {
       accessToken: oldAccessToken,
       refreshToken: oldRefreshToken,
-    }: { accessToken: string; refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
-      app,
-      testUserAgent,
-      loginUserData
-    );
+    }: { accessToken: string; refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const verifiedOldAccessTokenPayload: { userId: string } | null = await jwtAdapter.verifyAccessToken(
       oldAccessToken,
@@ -521,8 +523,11 @@ describe('Auth API', () => {
     const createUserLogin: string = createUserData.login;
     const createUserEmail: string = createUserData.email;
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserLogin, password: createUserData.password };
-    const accessToken: string = await loginUserReturnAccessToken(app, loginUserData);
+
+    const accessToken: string = await loginUserReturnAccessToken(app, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const authCreatedUserData: MeOutputDTO = await getAuthDataByAccessToken(
       app,

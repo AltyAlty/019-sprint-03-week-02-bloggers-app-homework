@@ -81,3 +81,19 @@ export const expiredUserEmailConfirmationData = {
   confirmationCode: randomUUID(),
   expirationDate: add(new Date(), { seconds: -1 }),
 };
+
+export const invalidRecoveryCodes = {
+  code_01: '',
+  code_02: '   ',
+  code_03: '0123456789111111',
+  code_04: '!@#$%^&*()',
+  code_05: 'ab',
+  code_06: null,
+  code_07: undefined,
+  code_08: 1234567890,
+};
+
+export const expiredRecoveryCodeData = {
+  recoveryCode: randomUUID(),
+  expirationDate: add(new Date(), { seconds: -1 }),
+};

@@ -10,7 +10,7 @@ import { commentsService } from '../../comments/application/comments.service';
 import { UserDBType } from '../repositories/types/user-db.type';
 import { authService } from '../../auth/application/auth.service';
 import { EmailConfirmationType } from '../../auth/application/types/email-сonfirmation.type';
-import { RecoveryCodeType } from '../../auth/application/types/recovery-code.type';
+import { RecoveryCodeDataType } from '../../auth/application/types/recovery-code-data.type';
 
 /*Сервис для работы с пользователями.*/
 export const usersService = {
@@ -127,20 +127,21 @@ export const usersService = {
 
   /*Метод для изменения пароля пользователя по коду восстановления.*/
   async updatePasswordByRecoveryCode(recoveryCode: string, password: string): Promise<Result<{} | null>> {
-    /*Просим сервис "authService" найти код восстановления пароля пользователя.*/
-    const recoveryCodeResult: Result<{ recoveryCodeOutput: RecoveryCodeType } | null> =
-      await authService.findRecoveryPasswordCode(recoveryCode);
+    /*Просим сервис "authService" найти данные о коде восстановления пароля пользователя по коду.*/
+    const recoveryCodeDataResult: Result<{ recoveryCodeDataOutput: RecoveryCodeDataType } | null> =
+      await authService.findRecoveryPasswordCodeDataByCode(recoveryCode);
 
-    /*Если код восстановления пароля пользователя не был найден, то возвращаем ResultObject с информацией об этом.*/
-    if (recoveryCodeResult.status !== ResultStatuses.Ok) return recoveryCodeResult as Result;
-    /*Если код восстановления пароля пользователя был найден, то получаем ID пользователя.*/
-    const userId: string = recoveryCodeResult.data!.recoveryCodeOutput.userId;
+    /*Если данные о коде восстановления пароля пользователя не были найдены, то возвращаем ResultObject с информацией об
+    этом.*/
+    if (recoveryCodeDataResult.status !== ResultStatuses.Ok) return recoveryCodeDataResult as Result;
+    /*Если данные о коде восстановления пароля пользователя были найдены, то получаем ID пользователя.*/
+    const userId: string = recoveryCodeDataResult.data!.recoveryCodeDataOutput.userId;
     /*Просим адаптер "argon2Adapter" сгенерировать хеш для пароля.*/
     const passwordHash: string = await argon2Adapter.generatePasswordHash(password);
     /*Просим репозиторий "usersRepository" изменить хеш для пароля пользователя по ID в БД.*/
     await usersRepository.updatePasswordHashById(userId, passwordHash);
-    /*Просим сервис "authService" удалить код восстановления пароля пользователя.*/
-    await authService.deleteRecoveryCode(recoveryCode);
+    /*Просим сервис "authService" удалить данные о коде восстановления пароля пользователя по коду.*/
+    await authService.deleteRecoveryCodeDataByCode(recoveryCode);
     /*Просим сервис "authService" удалить все сессии пользователя по ID пользователя.*/
     await authService.revokeAllSessionsByUserId(userId);
     /*Возвращаем ResultObject c информацией об изменении пароля пользователя.*/

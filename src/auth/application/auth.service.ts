@@ -20,9 +20,9 @@ import { ObjectId } from 'mongodb';
 import { EmailConfirmationDBType } from '../repositories/types/email-сonfirmation-db.type';
 import { mapToEmailConfirmation } from '../repositories/mappers/map-to-email-confirmation.util';
 import { EmailConfirmationType } from './types/email-сonfirmation.type';
-import { RecoveryCodeDBType } from '../repositories/types/recovery-code-db.type';
-import { mapToRecoveryCode } from '../repositories/mappers/map-to-recovery-code.util';
-import { RecoveryCodeType } from './types/recovery-code.type';
+import { RecoveryCodeDataDBType } from '../repositories/types/recovery-code-data-db.type';
+import { mapToRecoveryCodeData } from '../repositories/mappers/map-to-recovery-code-data.util';
+import { RecoveryCodeDataType } from './types/recovery-code-data.type';
 
 /*Сервис для работы с аутентификацией и авторизацией.*/
 export const authService = {
@@ -195,12 +195,15 @@ export const authService = {
     if (userResult.status !== ResultStatuses.Ok) return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
     /*Если пользователь был найден, то получаем ID пользователя.*/
     const userId: string = userResult.data!.userOutputWithIsConfirmedAndPasswordHash.id;
+    /*Просим репозиторий "authRepository" удалить данные о всех кодах восстановления пароля пользователя по ID
+    пользователя в БД.*/
+    await authRepository.deleteAllRecoveryCodesDataByUserId(userId);
     /*Генерируем код восстановления пароля пользователя.*/
     const recoveryCode: string = randomUUID();
     /*Генерируем дату истечения кода восстановления пароля пользователя.*/
     const recoveryCodeExpirationDate: Date = add(new Date(), SETTINGS.PASSWORD_RECOVERY_CODE_EXPIRATION_TIME);
-    /*Просим репозиторий "authRepository" создать код восстановления пароля пользователя в БД.*/
-    await authRepository.createRecoveryPasswordCode(userId, recoveryCode, recoveryCodeExpirationDate);
+    /*Просим репозиторий "authRepository" создать данные о коде восстановления пароля пользователя в БД.*/
+    await authRepository.createRecoveryPasswordCodeData(userId, recoveryCode, recoveryCodeExpirationDate);
 
     /*Просим адаптер "nodemailerAdapter" отправить письмо с кодом восстановления пароля пользователя.*/
     emailAdapter
@@ -248,15 +251,17 @@ export const authService = {
     return { status: ResultStatuses.Ok, data: { emailConfirmationOutput }, extensions: [] };
   },
 
-  /*Метод для поиска кода восстановления пароля пользователя.*/
-  async findRecoveryPasswordCode(
+  /*Метод для поиска данных о коде восстановления пароля пользователя по коду.*/
+  async findRecoveryPasswordCodeDataByCode(
     recoveryCode: string
-  ): Promise<Result<{ recoveryCodeOutput: RecoveryCodeType } | null>> {
-    /*Просим репозиторий "authRepository" найти код восстановления пароля пользователя в БД.*/
-    const recoveryCodeDB: RecoveryCodeDBType | null = await authRepository.findRecoveryPasswordCode(recoveryCode);
+  ): Promise<Result<{ recoveryCodeDataOutput: RecoveryCodeDataType } | null>> {
+    /*Просим репозиторий "authRepository" найти данные о коде восстановления пароля пользователя по коду в БД.*/
+    const recoveryCodeDataDB: RecoveryCodeDataDBType | null =
+      await authRepository.findRecoveryPasswordCodeDataByCode(recoveryCode);
 
-    /*Если код восстановления пароля пользователя не был найден, то возвращаем ResultObject с информацией об этом.*/
-    if (!recoveryCodeDB) {
+    /*Если данные о коде восстановления пароля пользователя не были найдены, то возвращаем ResultObject с информацией об
+    этом.*/
+    if (!recoveryCodeDataDB) {
       return {
         status: ResultStatuses.BadRequest,
         data: null,
@@ -265,11 +270,12 @@ export const authService = {
       };
     }
 
-    /*Если код восстановления пароля пользователя был найден, то преобразовываем код восстановления пароля пользователя
-    из БД в подготовленный для работы внутри приложения код восстановления пароля пользователя.*/
-    const recoveryCodeOutput: RecoveryCodeType = mapToRecoveryCode(recoveryCodeDB);
+    /*Если данные о коде восстановления пароля пользователя были найдены, то преобразовываем данные о коде
+    восстановления пароля пользователя из БД в подготовленные для работы внутри приложения данные о коде восстановления
+    пароля пользователя.*/
+    const recoveryCodeDataOutput: RecoveryCodeDataType = mapToRecoveryCodeData(recoveryCodeDataDB);
     /*Возвращаем ResultObject с преобразованным кодом восстановления пароля пользователя.*/
-    return { status: ResultStatuses.Ok, data: { recoveryCodeOutput }, extensions: [] };
+    return { status: ResultStatuses.Ok, data: { recoveryCodeDataOutput }, extensions: [] };
   },
 
   /*Метод для повторной отправки письма для подтверждения регистрации пользователя. Второй параметр для использования в
@@ -428,11 +434,11 @@ export const authService = {
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 
-  /*Метод для удаления кода восстановления пароля пользователя.*/
-  async deleteRecoveryCode(recoveryCode: string): Promise<Result<{}>> {
-    /*Просим репозиторий "authRepository" удалить код восстановления пароля пользователя в БД.*/
-    await authRepository.deleteRecoveryCode(recoveryCode);
-    /*Возвращаем ResultObject с информацией об удалении кода восстановления пароля пользователя.*/
+  /*Метод для удаления данных о коде восстановления пароля пользователя по коду.*/
+  async deleteRecoveryCodeDataByCode(recoveryCode: string): Promise<Result<{}>> {
+    /*Просим репозиторий "authRepository" удалить данные о коде восстановления пароля пользователя по коду в БД.*/
+    await authRepository.deleteRecoveryCodeDataByCode(recoveryCode);
+    /*Возвращаем ResultObject с информацией об удалении данных о коде восстановления пароля пользователя.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
   },
 

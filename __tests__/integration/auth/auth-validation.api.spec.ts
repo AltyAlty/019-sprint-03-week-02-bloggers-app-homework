@@ -119,12 +119,11 @@ describe('Auth API Validation', () => {
   it('❌ 004 should not authenticate a user when a user agent not passed; 001. POST /api/auth/login', async () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
 
     await loginUserReturnAccessAndRefreshTokens(
       app,
       validUserAgents.userAgent_01,
-      loginUserData,
+      { loginOrEmail: createUserData.login, password: createUserData.password },
       HttpStatuses.Unauthorized_401,
       true
     );
@@ -160,14 +159,12 @@ describe('Auth API Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
-    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
-      app,
-      testUserAgent,
-      loginUserData
-    );
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
       await jwtAdapter.decodeRefreshToken(refreshToken);
@@ -232,14 +229,12 @@ describe('Auth API Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
-    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
-      app,
-      testUserAgent,
-      loginUserData
-    );
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
       await jwtAdapter.decodeRefreshToken(refreshToken);
@@ -301,14 +296,12 @@ describe('Auth API Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
-    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
-      app,
-      testUserAgent,
-      loginUserData
-    );
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
       await jwtAdapter.decodeRefreshToken(refreshToken);
@@ -366,14 +359,12 @@ describe('Auth API Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
-    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
-      app,
-      testUserAgent,
-      loginUserData
-    );
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
       await jwtAdapter.decodeRefreshToken(refreshToken);
@@ -436,14 +427,12 @@ describe('Auth API Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
-    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
-      app,
-      testUserAgent,
-      loginUserData
-    );
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
       await jwtAdapter.decodeRefreshToken(refreshToken);
@@ -508,14 +497,12 @@ describe('Auth API Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
-    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
-      app,
-      testUserAgent,
-      loginUserData
-    );
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
       await jwtAdapter.decodeRefreshToken(refreshToken);
@@ -571,14 +558,12 @@ describe('Auth API Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
-    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
-      app,
-      testUserAgent,
-      loginUserData
-    );
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
       await jwtAdapter.decodeRefreshToken(refreshToken);
@@ -636,14 +621,12 @@ describe('Auth API Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
     const testUserAgent: string = validUserAgents.userAgent_01;
 
-    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(
-      app,
-      testUserAgent,
-      loginUserData
-    );
+    const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
       await jwtAdapter.decodeRefreshToken(refreshToken);
@@ -698,8 +681,7 @@ describe('Auth API Validation', () => {
   it('❌ 014 should not return user data when an invalid access token passed; 002. GET /api/auth/me', async () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     await createUser(app, createUserData);
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
-    await loginUserReturnAccessToken(app, loginUserData);
+    await loginUserReturnAccessToken(app, { loginOrEmail: createUserData.login, password: createUserData.password });
     const testUserAgent: string = validUserAgents.userAgent_01;
     const testStatus: HttpStatuses = HttpStatuses.Unauthorized_401;
 
@@ -717,8 +699,7 @@ describe('Auth API Validation', () => {
   it('❌ 015 should not return user data when an incorrect access token passed; 002. GET /api/auth/me', async () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     await createUser(app, createUserData);
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
-    await loginUserReturnAccessToken(app, loginUserData);
+    await loginUserReturnAccessToken(app, { loginOrEmail: createUserData.login, password: createUserData.password });
 
     await getAuthDataByAccessToken(
       app,
@@ -731,8 +712,12 @@ describe('Auth API Validation', () => {
   it('❌ 016 should not return user data when an invalid user agent passed; 002. GET /api/auth/me', async () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     await createUser(app, createUserData);
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
-    const accessToken: string = await loginUserReturnAccessToken(app, loginUserData);
+
+    const accessToken: string = await loginUserReturnAccessToken(app, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
+
     const testStatus: HttpStatuses = HttpStatuses.Unauthorized_401;
 
     await getAuthDataByAccessToken(app, invalidUserAgents.userAgent_01, accessToken, testStatus);
@@ -742,8 +727,11 @@ describe('Auth API Validation', () => {
   it('❌ 017 should not return user data when a user agent not passed; 002. GET /api/auth/me', async () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     await createUser(app, createUserData);
-    const loginUserData: LoginDataInputDTO = { loginOrEmail: createUserData.login, password: createUserData.password };
-    const accessToken: string = await loginUserReturnAccessToken(app, loginUserData);
+
+    const accessToken: string = await loginUserReturnAccessToken(app, {
+      loginOrEmail: createUserData.login,
+      password: createUserData.password,
+    });
 
     await getAuthDataByAccessToken(app, validUserAgents.userAgent_01, accessToken, HttpStatuses.Unauthorized_401, true);
   });
