@@ -1,8 +1,10 @@
 import nodemailer from 'nodemailer';
 import { SETTINGS } from '../../core/settings/settings';
+import { injectable } from 'inversify';
 
 /*Адаптер для работы с библиотекой nodemailer.*/
-export const nodemailerAdapter = {
+@injectable()
+export class NodemailerAdapter {
   /*Метод для отправки писем.*/
   async sendMail(emailTo: string, subject: string, code: string, template: (code: string) => string): Promise<boolean> {
     try {
@@ -38,5 +40,5 @@ export const nodemailerAdapter = {
       console.log(error);
       return false;
     }
-  },
-};
+  }
+}

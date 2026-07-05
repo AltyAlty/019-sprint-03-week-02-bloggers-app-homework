@@ -1,17 +1,17 @@
-import { argon2Adapter } from '../adapters/argon2.adapter';
+import { Argon2Adapter } from '../adapters/argon2.adapter';
+import { JwtAdapter } from '../adapters/jwt.adapter';
+import { NodemailerAdapter } from '../adapters/nodemailer.adapter';
+import { UsersService } from '../../users/application/users.service';
+import { SecurityDevicesService } from '../../security-devices/application/security-devices.service';
+import { AuthRepository } from '../repositories/auth.repository';
 import { ResultStatuses } from '../../core/types/result/result-statuses';
 import { Result } from '../../core/types/result/result.type';
-import { jwtAdapter } from '../adapters/jwt.adapter';
-import { usersService } from '../../users/application/users.service';
 import { UserOutputDTO } from '../../users/routes/output-dto/user.output-dto';
 import { CreateUserInputDTO } from '../../users/routes/input-dto/create-user.input-dto';
-import { nodemailerAdapter } from '../adapters/nodemailer.adapter';
 import { randomUUID } from 'crypto';
 import { emailExamples } from '../email/email-examples';
 import { add } from 'date-fns/add';
 import { SETTINGS } from '../../core/settings/settings';
-import { authRepository } from '../repositories/auth.repository';
-import { securityDevicesService } from '../../security-devices/application/security-devices.service';
 import { SessionDBType } from '../repositories/types/session-db.type';
 import { mapToSessionList } from '../repositories/mappers/map-to-session-list.util';
 import { SessionListType } from './types/session-list.type';
@@ -23,9 +23,29 @@ import { EmailConfirmationType } from './types/email-сonfirmation.type';
 import { RecoveryCodeDataDBType } from '../repositories/types/recovery-code-data-db.type';
 import { mapToRecoveryCodeData } from '../repositories/mappers/map-to-recovery-code-data.util';
 import { RecoveryCodeDataType } from './types/recovery-code-data.type';
+import { inject, injectable } from 'inversify';
+import { container } from '../../composition-root';
 
 /*Сервис для работы с аутентификацией и авторизацией.*/
-export const authService = {
+@injectable()
+export class AuthService {
+  constructor(
+    @inject(Argon2Adapter) private readonly argon2Adapter: Argon2Adapter,
+    @inject(JwtAdapter) private readonly jwtAdapter: JwtAdapter,
+    @inject(NodemailerAdapter) private readonly nodemailerAdapter: NodemailerAdapter,
+    @inject(SecurityDevicesService) private readonly securityDevicesService: SecurityDevicesService,
+    @inject(AuthRepository) private readonly authRepository: AuthRepository
+  ) {
+    this.argon2Adapter = argon2Adapter;
+    this.jwtAdapter = jwtAdapter;
+    this.nodemailerAdapter = nodemailerAdapter;
+    this.authRepository = authRepository;
+  }
+
+  private get usersService() {
+    return container.get(UsersService);
+  }
+
   /*Метод для аутентификации пользователя по логину/email и паролю.*/
   async loginUser(
     loginOrEmail: string,
@@ -46,10 +66,10 @@ export const authService = {
     /*Генерируем ID устройства пользователя.*/
     const deviceId = new ObjectId().toString();
     /*Просим адаптер "jwtAdapter" создать AT.*/
-    const accessToken: string = await jwtAdapter.createAccessToken(userId, SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!);
+    const accessToken: string = await this.jwtAdapter.createAccessToken(userId, SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!);
 
     /*Просим адаптер "jwtAdapter" создать RT.*/
-    const refreshToken: string = await jwtAdapter.createRefreshToken(
+    const refreshToken: string = await this.jwtAdapter.createRefreshToken(
       userId,
       deviceId,
       SETTINGS.RT_SECRET!,
@@ -58,7 +78,7 @@ export const authService = {
 
     /*Просим адаптер "jwtAdapter" декодировать RT.*/
     const refreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeRefreshToken(refreshToken);
+      await this.jwtAdapter.decodeRefreshToken(refreshToken);
 
     /*Если декодирование RT не прошло успешно, то возвращаем ResultObject с информацией об этом.*/
     if (!refreshTokenPayload) {
@@ -75,24 +95,24 @@ export const authService = {
     const refreshTokenIatDate: Date = new Date(refreshTokenIat * 1000);
     const refreshTokenExpDate: Date = new Date(refreshTokenExp * 1000);
     /*Просим репозиторий "authRepository" добавить сессию в БД.*/
-    await authRepository.createSession(userId, deviceId, deviceName, ip, refreshTokenIatDate, refreshTokenExpDate);
+    await this.authRepository.createSession(userId, deviceId, deviceName, ip, refreshTokenIatDate, refreshTokenExpDate);
     /*Просим сервис "securityDevicesService" добавить устройство пользователя.*/
-    await securityDevicesService.create({ deviceId, title: deviceName, ip, lastActiveDate: refreshTokenIatDate });
+    await this.securityDevicesService.create({ deviceId, title: deviceName, ip, lastActiveDate: refreshTokenIatDate });
     /*Возвращаем ResultObject с AT и RT.*/
     return { status: ResultStatuses.Ok, data: { accessToken, refreshToken }, extensions: [] };
-  },
+  }
 
   /*Метод для регистрации пользователя. Второй параметр для использования в тестах.*/
   async registerUser(
     dto: CreateUserInputDTO,
-    emailAdapter = nodemailerAdapter
+    emailAdapter = this.nodemailerAdapter
   ): Promise<Result<{ createdUserId: string }>> {
     /*Генерируем код подтверждения регистрации пользователя.*/
     const newUserConfirmationCode: string = randomUUID();
     /*Генерируем дату истечения кода подтверждения регистрации пользователя.*/
     const newUserExpirationDate: Date = add(new Date(), SETTINGS.COMPLETE_REGISTRATION_CODE_EXPIRATION_TIME);
     /*Просим сервис "usersService" создать пользователя.*/
-    const createUserResult: Result<{ createdUserId: string }> = await usersService.create(dto, true);
+    const createUserResult: Result<{ createdUserId: string }> = await this.usersService.create(dto, true);
     /*Получаем ID созданного пользователя.*/
     const createdUserId: string = createUserResult.data.createdUserId;
     /*Просим сервис "authService" создать данные о подтверждении регистрации пользователя.*/
@@ -105,7 +125,7 @@ export const authService = {
 
     /*Если письмо было успешно отправлено, то возвращаем ResultObject с информацией об этом.*/
     return { status: ResultStatuses.Created, data: { createdUserId }, extensions: [] };
-  },
+  }
 
   /*Метод для перевыпуска пары AT/RT.*/
   async refreshAccessAndRefreshTokens(
@@ -116,7 +136,7 @@ export const authService = {
   ): Promise<Result<{ accessToken: string; refreshToken: string } | null>> {
     /*Просим адаптер "jwtAdapter" декодировать RT.*/
     const currentRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeRefreshToken(currentRefreshToken);
+      await this.jwtAdapter.decodeRefreshToken(currentRefreshToken);
 
     /*Если декодирование RT не прошло успешно, то возвращаем ResultObject с информацией об этом.*/
     if (!currentRefreshTokenPayload) {
@@ -132,10 +152,10 @@ export const authService = {
     const { iat: currentRefreshTokenIat }: { iat: number } = currentRefreshTokenPayload;
     const currentRefreshTokenIatDate: Date = new Date(currentRefreshTokenIat * 1000);
     /*Просим адаптер "jwtAdapter" создать AT.*/
-    const accessToken: string = await jwtAdapter.createAccessToken(userId, SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!);
+    const accessToken: string = await this.jwtAdapter.createAccessToken(userId, SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!);
 
     /*Просим адаптер "jwtAdapter" создать RT.*/
-    const refreshToken: string = await jwtAdapter.createRefreshToken(
+    const refreshToken: string = await this.jwtAdapter.createRefreshToken(
       userId,
       deviceId,
       SETTINGS.RT_SECRET!,
@@ -144,7 +164,7 @@ export const authService = {
 
     /*Просим адаптер "jwtAdapter" декодировать созданный RT.*/
     const refreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeRefreshToken(refreshToken);
+      await this.jwtAdapter.decodeRefreshToken(refreshToken);
 
     /*Если декодирование RT не прошло успешно, то возвращаем ResultObject с информацией об этом.*/
     if (!refreshTokenPayload) {
@@ -161,10 +181,15 @@ export const authService = {
     const refreshTokenIatDate: Date = new Date(refreshTokenIat * 1000);
     const refreshTokenExpDate: Date = new Date(refreshTokenExp * 1000);
     /*Просим репозиторий "authRepository" изменить сессию по дате создания RT в БД.*/
-    await authRepository.updateSessionByIat(currentRefreshTokenIatDate, refreshTokenIatDate, refreshTokenExpDate, ip);
+    await this.authRepository.updateSessionByIat(
+      currentRefreshTokenIatDate,
+      refreshTokenIatDate,
+      refreshTokenExpDate,
+      ip
+    );
 
     /*Просим сервис "securityDevicesService" изменить устройство пользователя по ID.*/
-    const updatedSecurityDeviceResult: Result<{} | null> = await securityDevicesService.updateById(
+    const updatedSecurityDeviceResult: Result<{} | null> = await this.securityDevicesService.updateById(
       deviceId,
       ip,
       refreshTokenIatDate
@@ -174,22 +199,22 @@ export const authService = {
     if (updatedSecurityDeviceResult.status !== ResultStatuses.NoContent) return updatedSecurityDeviceResult as Result;
     /*Если изменение устройства пользователя прошло успешно, то возвращаем ResultObject с созданными AT и RT.*/
     return { status: ResultStatuses.Ok, data: { accessToken, refreshToken }, extensions: [] };
-  },
+  }
 
   /*Метод для создания данных о подтверждении регистрации пользователя.*/
   async createEmailConfirmation(userId: string, confirmationCode: string, expirationDate: Date): Promise<Result<{}>> {
     /*Просим репозиторий "authRepository" создать данные о подтверждении регистрации пользователя в БД.*/
-    await authRepository.createEmailConfirmation(userId, confirmationCode, expirationDate);
+    await this.authRepository.createEmailConfirmation(userId, confirmationCode, expirationDate);
     /*Возвращаем ResultObject с информацией о создании данных о подтверждении регистрации пользователя.*/
     return { status: ResultStatuses.Created, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для отправки письма с кодом восстановления пароля пользователя. Второй параметр для использования в тестах.*/
-  async sendRecoveryPasswordCode(email: string, emailAdapter = nodemailerAdapter): Promise<Result<{}>> {
+  async sendRecoveryPasswordCode(email: string, emailAdapter = this.nodemailerAdapter): Promise<Result<{}>> {
     /*Просим сервис "usersService" найти пользователя по email.*/
     const userResult: Result<{
       userOutputWithIsConfirmedAndPasswordHash: UserOutputDTO & { isConfirmed: boolean; passwordHash: string };
-    } | null> = await usersService.findByLoginOrEmail(email);
+    } | null> = await this.usersService.findByLoginOrEmail(email);
 
     /*Если пользователь не был найден, то возвращаем ResultObject с информацией об этом.*/
     if (userResult.status !== ResultStatuses.Ok) return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
@@ -197,13 +222,13 @@ export const authService = {
     const userId: string = userResult.data!.userOutputWithIsConfirmedAndPasswordHash.id;
     /*Просим репозиторий "authRepository" удалить данные о всех кодах восстановления пароля пользователя по ID
     пользователя в БД.*/
-    await authRepository.deleteAllRecoveryCodesDataByUserId(userId);
+    await this.authRepository.deleteAllRecoveryCodesDataByUserId(userId);
     /*Генерируем код восстановления пароля пользователя.*/
     const recoveryCode: string = randomUUID();
     /*Генерируем дату истечения кода восстановления пароля пользователя.*/
     const recoveryCodeExpirationDate: Date = add(new Date(), SETTINGS.PASSWORD_RECOVERY_CODE_EXPIRATION_TIME);
     /*Просим репозиторий "authRepository" создать данные о коде восстановления пароля пользователя в БД.*/
-    await authRepository.createRecoveryPasswordCodeData(userId, recoveryCode, recoveryCodeExpirationDate);
+    await this.authRepository.createRecoveryPasswordCodeData(userId, recoveryCode, recoveryCodeExpirationDate);
 
     /*Просим адаптер "nodemailerAdapter" отправить письмо с кодом восстановления пароля пользователя.*/
     emailAdapter
@@ -212,17 +237,17 @@ export const authService = {
 
     /*Если письмо было успешно отправлено, то возвращаем ResultObject с информацией об этом.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для поиска сессий по ID пользователя.*/
   async findAllSessionsByUserId(userId: string): Promise<Result<{ sessionListOutput: SessionListType }>> {
     /*Просим репозиторий "authRepository" найти сессии по ID пользователя в БД.*/
-    const sessionsDB: SessionDBType[] = await authRepository.findAllSessionsByUserId(userId);
+    const sessionsDB: SessionDBType[] = await this.authRepository.findAllSessionsByUserId(userId);
     /*Преобразовываем сессии из БД в подготовленные для работы внутри приложения сессии.*/
     const sessionListOutput: SessionListType = mapToSessionList(sessionsDB);
     /*Возвращаем ResultObject с преобразованным сессиями.*/
     return { status: ResultStatuses.Ok, data: { sessionListOutput }, extensions: [] };
-  },
+  }
 
   /*Метод для поиска данных о подтверждении регистрации пользователя по коду подтверждения.*/
   async findEmailConfirmationByCode(
@@ -230,7 +255,8 @@ export const authService = {
   ): Promise<Result<{ emailConfirmationOutput: EmailConfirmationType } | null>> {
     /*Просим репозиторий "authRepository" найти данные о подтверждении регистрации пользователя по коду подтверждения в
     БД.*/
-    const emailConfirmationDB: EmailConfirmationDBType | null = await authRepository.findEmailConfirmationByCode(code);
+    const emailConfirmationDB: EmailConfirmationDBType | null =
+      await this.authRepository.findEmailConfirmationByCode(code);
 
     /*Если данные о подтверждении регистрации пользователя не были найдены, то возвращаем ResultObject с информацией об
     этом.*/
@@ -249,7 +275,7 @@ export const authService = {
     const emailConfirmationOutput: EmailConfirmationType = mapToEmailConfirmation(emailConfirmationDB);
     /*Возвращаем ResultObject с преобразованными данными о подтверждении регистрации пользователя.*/
     return { status: ResultStatuses.Ok, data: { emailConfirmationOutput }, extensions: [] };
-  },
+  }
 
   /*Метод для поиска данных о коде восстановления пароля пользователя по коду.*/
   async findRecoveryPasswordCodeDataByCode(
@@ -257,7 +283,7 @@ export const authService = {
   ): Promise<Result<{ recoveryCodeDataOutput: RecoveryCodeDataType } | null>> {
     /*Просим репозиторий "authRepository" найти данные о коде восстановления пароля пользователя по коду в БД.*/
     const recoveryCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByCode(recoveryCode);
+      await this.authRepository.findRecoveryPasswordCodeDataByCode(recoveryCode);
 
     /*Если данные о коде восстановления пароля пользователя не были найдены, то возвращаем ResultObject с информацией об
     этом.*/
@@ -276,11 +302,11 @@ export const authService = {
     const recoveryCodeDataOutput: RecoveryCodeDataType = mapToRecoveryCodeData(recoveryCodeDataDB);
     /*Возвращаем ResultObject с преобразованным кодом восстановления пароля пользователя.*/
     return { status: ResultStatuses.Ok, data: { recoveryCodeDataOutput }, extensions: [] };
-  },
+  }
 
   /*Метод для повторной отправки письма для подтверждения регистрации пользователя. Второй параметр для использования в
   тестах.*/
-  async resendConfirmationEmail(email: string, emailAdapter = nodemailerAdapter): Promise<Result<{} | null>> {
+  async resendConfirmationEmail(email: string, emailAdapter = this.nodemailerAdapter): Promise<Result<{} | null>> {
     /*Генерируем код подтверждения регистрации пользователя.*/
     const newUserConfirmationCode: string = randomUUID();
     /*Генерируем дату истечения кода подтверждения регистрации пользователя.*/
@@ -289,7 +315,7 @@ export const authService = {
     /*Просим сервис "usersService" найти пользователя по email.*/
     const userResult: Result<{
       userOutputWithIsConfirmedAndPasswordHash: UserOutputDTO & { isConfirmed: boolean; passwordHash: string };
-    } | null> = await usersService.findByLoginOrEmail(email);
+    } | null> = await this.usersService.findByLoginOrEmail(email);
 
     /*Если пользователь не был найден, то возвращаем ResultObject с информацией об этом.*/
     if (userResult.status !== ResultStatuses.Ok) {
@@ -318,7 +344,7 @@ export const authService = {
 
     /*Если письмо было успешно отправлено, то возвращаем ResultObject с информацией об этом.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для изменения данных о подтверждении регистрации пользователя по ID пользователя.*/
   async updateEmailConfirmationByUserId(
@@ -328,7 +354,7 @@ export const authService = {
   ): Promise<Result<{}>> {
     /*Просим репозиторий "authRepository" изменить данные для подтверждения регистрации пользователя по ID пользователя
     в БД.*/
-    const updatedEmailConfirmationCount: number = await authRepository.updateEmailConfirmationByUserId(
+    const updatedEmailConfirmationCount: number = await this.authRepository.updateEmailConfirmationByUserId(
       userId,
       confirmationCode,
       expirationDate
@@ -339,13 +365,13 @@ export const authService = {
     if (updatedEmailConfirmationCount < 1) await this.createEmailConfirmation(userId, confirmationCode, expirationDate);
     /*Возвращаем ResultObject с информацией об изменении данных о подтверждении регистрации пользователя.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для отзыва сессии.*/
   async revokeSession(refreshToken: string): Promise<Result<{} | null>> {
     /*Просим адаптер "jwtAdapter" декодировать RT.*/
     const refreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeRefreshToken(refreshToken);
+      await this.jwtAdapter.decodeRefreshToken(refreshToken);
 
     /*Если декодирование RT не прошло успешно, то возвращаем ResultObject с информацией об этом.*/
     if (!refreshTokenPayload) {
@@ -361,26 +387,26 @@ export const authService = {
     const { iat: refreshTokenIat }: { iat: number } = refreshTokenPayload;
     const refreshTokenIatDate: Date = new Date(refreshTokenIat * 1000);
     /*Просим репозиторий "authRepository" удалить сессию по дате создания RT в БД.*/
-    await authRepository.deleteSessionByIat(refreshTokenIatDate);
+    await this.authRepository.deleteSessionByIat(refreshTokenIatDate);
     /*Возвращаем ResultObject с информацией об отзыве сессии.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для отзыва всех сессий пользователя, кроме текущей.*/
   async revokeSessionsExceptCurrentDevice(userId: string, deviceId: string): Promise<Result<{}>> {
     /*Просим репозиторий "authRepository" удалить все сессии пользователя, кроме текущей, в БД.*/
-    await authRepository.deleteSessionsExceptCurrentDevice(userId, deviceId);
+    await this.authRepository.deleteSessionsExceptCurrentDevice(userId, deviceId);
     /*Просим сервис "securityDevicesService" удалить все устройства пользователя, кроме текущего.*/
-    await securityDevicesService.deleteAllExceptCurrentDevice(deviceId);
+    await this.securityDevicesService.deleteAllExceptCurrentDevice(deviceId);
     /*Возвращаем ResultObject с информацией об отзыве сессий.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для отзыва сессии по ID пользователя и ID устройства пользователя.*/
   async revokeSessionByUserIdAndDeviceId(userId: string, deviceId: string): Promise<Result<{} | null>> {
     /*Просим сервис "securityDevicesService" найти устройство пользователя по ID.*/
     const securityDeviceResult: Result<{ securityDeviceOutput: SecurityDeviceOutputDTO } | null> =
-      await securityDevicesService.findById(deviceId);
+      await this.securityDevicesService.findById(deviceId);
 
     /*Если устройство пользователя не было найдено, то возвращаем ResultObject с информацией об этом.*/
     if (securityDeviceResult.status !== ResultStatuses.Ok) {
@@ -394,7 +420,7 @@ export const authService = {
 
     /*Если устройство пользователя было найдено, то просим репозиторий "authRepository" найти сессию по ID пользователя
     и ID устройства пользователя в БД.*/
-    const sessionDB: SessionDBType | null = await authRepository.findSessionByUserIdAndDeviceId(userId, deviceId);
+    const sessionDB: SessionDBType | null = await this.authRepository.findSessionByUserIdAndDeviceId(userId, deviceId);
 
     /*Если указанное устройство не принадлежит пользователю, то возвращаем ResultObject с информацией об этом*/
     if (!sessionDB) {
@@ -408,46 +434,46 @@ export const authService = {
 
     /*Если указанное устройство принадлежит пользователю, то просим репозиторий "authRepository" удалить сессию по ID
     устройства пользователя в БД.*/
-    await authRepository.deleteSessionByUserIdAndDeviceId(userId, deviceId);
+    await this.authRepository.deleteSessionByUserIdAndDeviceId(userId, deviceId);
     /*Просим сервис "securityDevicesService" удалить устройство пользователя по ID устройства.*/
-    await securityDevicesService.deleteById(deviceId);
+    await this.securityDevicesService.deleteById(deviceId);
     /*Возвращаем ResultObject с информацией об отзыве сессии.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для отзыва всех сессий пользователя по ID пользователя.*/
   async revokeAllSessionsByUserId(userId: string): Promise<Result<{}>> {
     /*Просим репозиторий "authRepository" удалить все сессии пользователя по ID пользователя в БД.*/
-    await authRepository.deleteAllSessionsByUserId(userId);
+    await this.authRepository.deleteAllSessionsByUserId(userId);
     /*Просим сервис "securityDevicesService" удалить все устройства пользователя по ID пользователя.*/
-    await securityDevicesService.deleteAllByUserId(userId);
+    await this.securityDevicesService.deleteAllByUserId(userId);
     /*Возвращаем ResultObject с информацией об отзыве сессий.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для удаления данных о подтверждении регистрации пользователя по ID пользователя.*/
   async deleteEmailConfirmationByUserId(userId: string): Promise<Result<{}>> {
     /*Просим репозиторий "authRepository" удалить данные о подтверждении регистрации пользователя по ID пользователя в
     БД.*/
-    await authRepository.deleteEmailConfirmationByUserId(userId);
+    await this.authRepository.deleteEmailConfirmationByUserId(userId);
     /*Возвращаем ResultObject с информацией об удалении данных о подтверждении регистрации пользователя.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для удаления данных о коде восстановления пароля пользователя по коду.*/
   async deleteRecoveryCodeDataByCode(recoveryCode: string): Promise<Result<{}>> {
     /*Просим репозиторий "authRepository" удалить данные о коде восстановления пароля пользователя по коду в БД.*/
-    await authRepository.deleteRecoveryCodeDataByCode(recoveryCode);
+    await this.authRepository.deleteRecoveryCodeDataByCode(recoveryCode);
     /*Возвращаем ResultObject с информацией об удалении данных о коде восстановления пароля пользователя.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для проверки подлинности логина/email и пароля пользователя.*/
   async _checkUserCredentials(loginOrEmail: string, password: string): Promise<Result<{ id: string } | null>> {
     /*Просим сервис "usersService" найти пользователя по логину/email.*/
     const userResult: Result<{
       userOutputWithIsConfirmedAndPasswordHash: UserOutputDTO & { isConfirmed: boolean; passwordHash: string };
-    } | null> = await usersService.findByLoginOrEmail(loginOrEmail);
+    } | null> = await this.usersService.findByLoginOrEmail(loginOrEmail);
 
     /*Если пользователь не был найден, то возвращаем ResultObject с информацией об этом.*/
     if (userResult.status !== ResultStatuses.Ok) {
@@ -472,7 +498,7 @@ export const authService = {
 
     /*Если пользователь был найден и у него была подтверждена регистрация, то просим адаптер "argon2Adapter" проверить
     валидность пароля.*/
-    const isPasswordValid: boolean = await argon2Adapter.checkPasswordByHash(
+    const isPasswordValid: boolean = await this.argon2Adapter.checkPasswordByHash(
       password,
       userResult.data!.userOutputWithIsConfirmedAndPasswordHash.passwordHash
     );
@@ -493,5 +519,5 @@ export const authService = {
       data: { id: userResult.data!.userOutputWithIsConfirmedAndPasswordHash.id },
       extensions: [],
     };
-  },
-};
+  }
+}

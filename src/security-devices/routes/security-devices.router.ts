@@ -1,13 +1,15 @@
 import { Router } from 'express';
 import { SETTINGS } from '../../core/settings/settings';
 import { refreshTokenGuardMiddleware } from '../../auth/middlewares/guard-middlewares/refresh-token.guard-middleware';
-import { getSecurityDeviceListHandler } from './handlers/get-security-device-list.handler';
-import { revokeSessionsExceptCurrentDeviceHandler } from './handlers/revoke-sessions-except-current-device.handler';
-import { revokeSessionByDeviceIdHandler } from './handlers/revoke-session-by-device-id.handler';
 import { idValidation } from '../../core/middlewares/validation/params-id-validation.middlewares';
 import { inputValidationResultMiddleware } from '../../core/middlewares/validation/input-validation-result.middleware';
+import { container } from '../../composition-root';
+import { SecurityDevicesController } from './security-devices.controller';
 
-/*Роутер из Express для работы с устройствами пользователя в сессиях.*/
+/**/
+const securityDevicesController = container.get<SecurityDevicesController>(SecurityDevicesController);
+
+/*Роутер из Express для работы с устройствами пользователя.*/
 export const securityDevicesRouter: Router = Router({});
 
 /*Конфигурируем роутер "securityDevicesRouter".*/
@@ -17,14 +19,14 @@ securityDevicesRouter
     SETTINGS.GET_SECURITY_DEVICE_LIST_PATH,
     refreshTokenGuardMiddleware,
     inputValidationResultMiddleware,
-    getSecurityDeviceListHandler
+    securityDevicesController.getSecurityDeviceListHandler.bind(securityDevicesController)
   )
   /*002. DELETE-запрос по отзыву всех сессий, кроме текущей.*/
   .delete(
     SETTINGS.REVOKE_SESSIONS_EXCEPT_CURRENT_DEVICE_PATH,
     refreshTokenGuardMiddleware,
     inputValidationResultMiddleware,
-    revokeSessionsExceptCurrentDeviceHandler
+    securityDevicesController.revokeSessionsExceptCurrentDeviceHandler.bind(securityDevicesController)
   )
   /*003. DELETE-запрос по отзыву сессии по ID устройства, используя URI-параметры.*/
   .delete(
@@ -32,5 +34,5 @@ securityDevicesRouter
     refreshTokenGuardMiddleware,
     idValidation,
     inputValidationResultMiddleware,
-    revokeSessionByDeviceIdHandler
+    securityDevicesController.revokeSessionByDeviceIdHandler.bind(securityDevicesController)
   );

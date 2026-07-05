@@ -2,9 +2,11 @@ import { SecurityDeviceType } from '../application/types/security-device.type';
 import { db } from '../../db/mongodb/mongo.db';
 import { DeleteResult, InsertOneResult, UpdateResult } from 'mongodb';
 import { SecurityDeviceDBType } from './types/security-device-db.type';
+import { injectable } from 'inversify';
 
 /*Репозиторий для работы с устройствами пользователей в БД.*/
-export const securityDevicesRepository = {
+@injectable()
+export class SecurityDevicesRepository {
   /*Метод для добавления устройства пользователя в БД.*/
   async create(securityDevice: SecurityDeviceType): Promise<string> {
     /*Просим коллекцию "securityDevicesCollection" создать устройство пользователя в БД.*/
@@ -14,7 +16,7 @@ export const securityDevicesRepository = {
 
     /*Возвращаем ID созданного устройства пользователя.*/
     return insertResult.insertedId.toString();
-  },
+  }
 
   /*Метод для поиска устройства пользователя по ID в БД.*/
   async findById(id: string): Promise<SecurityDeviceDBType | null> {
@@ -22,7 +24,7 @@ export const securityDevicesRepository = {
     const securityDevice: SecurityDeviceDBType | null = await db.securityDevicesCollection.findOne({ deviceId: id });
     /*Если устройство пользователя было найдено, то возвращаем его, иначе возвращаем null.*/
     return securityDevice ?? null;
-  },
+  }
 
   /*Метод для изменения устройства пользователя по ID в БД.*/
   async updateById(id: string, ip: string, lastActiveDate: Date): Promise<number> {
@@ -34,7 +36,7 @@ export const securityDevicesRepository = {
 
     /*Возвращаем количество измененных устройств пользователя.*/
     return updateResult.matchedCount;
-  },
+  }
 
   /*Метод для удаления устройства пользователя по ID устройства в БД.*/
   async deleteById(id: string): Promise<number> {
@@ -42,7 +44,7 @@ export const securityDevicesRepository = {
     const deleteResult: DeleteResult = await db.securityDevicesCollection.deleteOne({ deviceId: id });
     /*Возвращаем количество удаленных устройств пользователя.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления всех устройств пользователя, кроме текущего, в БД.*/
   async deleteAllExceptCurrentDevice(id: string): Promise<number> {
@@ -50,7 +52,7 @@ export const securityDevicesRepository = {
     const deleteResult: DeleteResult = await db.securityDevicesCollection.deleteMany({ deviceId: { $ne: id } });
     /*Возвращаем количество удаленных устройств пользователя.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления всех устройств пользователя по ID пользователя в БД.*/
   async deleteAllByUserId(userId: string): Promise<number> {
@@ -58,5 +60,5 @@ export const securityDevicesRepository = {
     const deleteResult: DeleteResult = await db.securityDevicesCollection.deleteMany({ userId });
     /*Возвращаем количество удаленных устройств пользователя.*/
     return deleteResult.deletedCount;
-  },
-};
+  }
+}

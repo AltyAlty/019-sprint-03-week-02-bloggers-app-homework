@@ -1,16 +1,27 @@
-import { blogsRepository } from '../repositories/blogs.repository';
+import { PostsService } from '../../posts/application/posts.service';
+import { BlogsRepository } from '../repositories/blogs.repository';
 import { BlogType } from './types/blog.type';
 import { CreateBlogInputDTO } from '../routes/input-dto/create-blog.input-dto';
 import { UpdateBlogByIdInputDTO } from '../routes/input-dto/update-blog-by-id.input-dto';
-import { postsService } from '../../posts/application/posts.service';
 import { ResultStatuses } from '../../core/types/result/result-statuses';
 import { Result } from '../../core/types/result/result.type';
 import { BlogOutputDTO } from '../routes/output-dto/blog.output-dto';
 import { mapToBlogOutputDTO } from '../repositories/mappers/map-to-blog-output-dto.util';
 import { BlogDBType } from '../repositories/types/blog-db.type';
+import { inject, injectable } from 'inversify';
+import { container } from '../../composition-root';
 
 /*Сервис для работы с блогами.*/
-export const blogsService = {
+@injectable()
+export class BlogsService {
+  constructor(@inject(BlogsRepository) private readonly blogsRepository: BlogsRepository) {
+    this.blogsRepository = blogsRepository;
+  }
+
+  private get postsService() {
+    return container.get(PostsService);
+  }
+
   /*Метод для добавления блога.*/
   async create(dto: CreateBlogInputDTO): Promise<Result<{ createdBlogId: string }>> {
     /*Создаем объект с данными нового блога.*/
@@ -23,15 +34,15 @@ export const blogsService = {
     };
 
     /*Просим репозиторий "blogsRepository" создать блог в БД.*/
-    const createdBlogId: string = await blogsRepository.create(newBlog);
+    const createdBlogId: string = await this.blogsRepository.create(newBlog);
     /*Возвращаем ResultObject с ID созданного блога.*/
     return { status: ResultStatuses.Created, data: { createdBlogId }, extensions: [] };
-  },
+  }
 
   /*Метод для поиска блога по ID.*/
   async findById(id: string): Promise<Result<{ blogOutput: BlogOutputDTO } | null>> {
     /*Просим репозиторий "blogsRepository" найти блог по ID в БД.*/
-    const blogDB: BlogDBType | null = await blogsRepository.findById(id);
+    const blogDB: BlogDBType | null = await this.blogsRepository.findById(id);
 
     /*Если блог не был найден, то возвращаем ResultObject с информацией об этом.*/
     if (!blogDB) {
@@ -47,12 +58,12 @@ export const blogsService = {
     const blogOutput: BlogOutputDTO = mapToBlogOutputDTO(blogDB);
     /*Возвращаем ResultObject с преобразованным блогом.*/
     return { status: ResultStatuses.Ok, data: { blogOutput }, extensions: [] };
-  },
+  }
 
   /*Метод для изменения блога по ID.*/
   async updateById(id: string, dto: UpdateBlogByIdInputDTO): Promise<Result<{} | null>> {
     /*Просим репозиторий "blogsRepository" изменить блог по ID в БД.*/
-    const updatedBlogCount: number = await blogsRepository.updateById(id, dto);
+    const updatedBlogCount: number = await this.blogsRepository.updateById(id, dto);
 
     /*Если блог не был изменен, то возвращаем ResultObject с информацией об этом.*/
     if (updatedBlogCount < 1) {
@@ -66,12 +77,12 @@ export const blogsService = {
 
     /*Если блог был изменен, то возвращаем ResultObject с информацией об этом.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
+  }
 
   /*Метод для удаления блога по ID.*/
   async deleteById(id: string): Promise<Result<{} | null>> {
     /*Просим репозиторий "blogsRepository" найти блог по ID в БД.*/
-    const blogDB: BlogDBType | null = await blogsRepository.findById(id);
+    const blogDB: BlogDBType | null = await this.blogsRepository.findById(id);
 
     /*Если блог не был найден, то возвращаем ResultObject с информацией об этом.*/
     if (!blogDB) {
@@ -84,10 +95,10 @@ export const blogsService = {
     }
 
     /*Если блог был найден, то просим сервис "postsService" удалить посты в блоге по ID.*/
-    await postsService.deleteAllByBlogId(id);
+    await this.postsService.deleteAllByBlogId(id);
     /*Просим репозиторий "blogsRepository" удалить блог по ID в БД.*/
-    await blogsRepository.deleteById(id);
+    await this.blogsRepository.deleteById(id);
     /*Возвращаем ResultObject с информацией об удалении блога.*/
     return { status: ResultStatuses.NoContent, data: {}, extensions: [] };
-  },
-};
+  }
+}

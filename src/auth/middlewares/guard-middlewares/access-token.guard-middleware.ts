@@ -1,10 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
-import { jwtAdapter } from '../../adapters/jwt.adapter';
+import { JwtAdapter } from '../../adapters/jwt.adapter';
 import { IdType } from '../../../core/types/id.type';
 import { HttpStatuses } from '../../../core/types/http-statuses';
 import { SETTINGS } from '../../../core/settings/settings';
-import { usersRepository } from '../../../users/repositories/users.repository';
+import { UsersRepository } from '../../../users/repositories/users.repository';
 import { ObjectId } from 'mongodb';
+import { container } from '../../../composition-root';
+
+/**/
+const jwtAdapter = container.get<JwtAdapter>(JwtAdapter);
+const usersRepository = container.get<UsersRepository>(UsersRepository);
 
 /*Guard-middleware для проверки AT.*/
 export const accessTokenGuardMiddleware = async (

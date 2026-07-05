@@ -7,10 +7,10 @@ import { HttpStatuses } from '../../../src/core/types/http-statuses';
 import { registerUser } from '../../utils/auth/register-user.test-util';
 import { UserOutputDTO } from '../../../src/users/routes/output-dto/user.output-dto';
 import { createUser } from '../../utils/users/create-user.test-util';
-import { usersService } from '../../../src/users/application/users.service';
+import { UsersService } from '../../../src/users/application/users.service';
 import { Result } from '../../../src/core/types/result/result.type';
 import { UserDBType } from '../../../src/users/repositories/types/user-db.type';
-import { usersRepository } from '../../../src/users/repositories/users.repository';
+import { UsersRepository } from '../../../src/users/repositories/users.repository';
 import { confirmUserByCode } from '../../utils/auth/confirm-user-by-code.test-util';
 import { resendConfirmationEmail } from '../../utils/auth/resend-confirmation-email.test-util';
 import {
@@ -45,8 +45,8 @@ import { delay } from '../../utils/common/delay.test-util';
 import { setTimeout } from 'timers/promises';
 import { createNodemailerAdapterSendMailSpyAndMock } from '../../test-doubles/spies-mocks';
 import { EmailConfirmationDBType } from '../../../src/auth/repositories/types/email-сonfirmation-db.type';
-import { authRepository } from '../../../src/auth/repositories/auth.repository';
-import { authService } from '../../../src/auth/application/auth.service';
+import { AuthRepository } from '../../../src/auth/repositories/auth.repository';
+import { AuthService } from '../../../src/auth/application/auth.service';
 import { loginUserReturnAccessAndRefreshTokens } from '../../utils/auth/login-user-return-access-and-refresh-tokens.test-util';
 import { RecoveryCodeDataDBType } from '../../../src/auth/repositories/types/recovery-code-data-db.type';
 import { SessionDBType } from '../../../src/auth/repositories/types/session-db.type';
@@ -500,7 +500,7 @@ describe('Auth Validation', () => {
       testStatus
     );
 
-    const notConfirmedUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createUserData.login);
+    const notConfirmedUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createUserData.login);
     expect(notConfirmedUserDB?.isConfirmed).toBeFalsy();
     expect(confirmUserByCodeResponse_01.errorsMessages[0].field).toBe('code');
     expect(confirmUserByCodeResponse_01.errorsMessages[0].message).toBe('Field "code" must not be empty');
@@ -548,7 +548,7 @@ describe('Auth Validation', () => {
       HttpStatuses.BadRequest_400
     );
 
-    const notConfirmedUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createUserData.login);
+    const notConfirmedUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createUserData.login);
     expect(notConfirmedUserDB?.isConfirmed).toBeFalsy();
     expect(confirmUserByCodeResponse.errorsMessages[0].field).toBe('code');
     expect(confirmUserByCodeResponse.errorsMessages[0].message).toBe('Field "code" is invalid');
@@ -602,11 +602,11 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUserLogin: string = createUserData.login;
     await registerUser(app, createUserData);
-    const createdUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const createdUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
     const createdUserId: string = String(createdUserDB?._id);
 
     const emailConfirmationDB_01: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     const testUserAgent: string = validUserAgents.userAgent_01;
     await confirmUserByCode(app, testUserAgent, emailConfirmationDB_01?.confirmationCode);
@@ -618,10 +618,10 @@ describe('Auth Validation', () => {
       HttpStatuses.BadRequest_400
     );
 
-    const twiceConfirmedUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const twiceConfirmedUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
 
     const emailConfirmationDB_02: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     expect(twiceConfirmedUserDB?.isConfirmed).toBeTruthy();
     expect(emailConfirmationDB_02).toBeNull();
@@ -647,10 +647,10 @@ describe('Auth Validation', () => {
       createAuthServiceUpdateEmailConfirmationByUserIdSpy();
 
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
-    const createdUserResult: Result<{ createdUserId: string }> = await usersService.create(createUserData, true);
+    const createdUserResult: Result<{ createdUserId: string }> = await UsersService.create(createUserData, true);
     const createdUserId: string = createdUserResult.data.createdUserId;
 
-    await authService.createEmailConfirmation(
+    await AuthService.createEmailConfirmation(
       createdUserId,
       expiredUserEmailConfirmationData.confirmationCode,
       expiredUserEmailConfirmationData.expirationDate
@@ -663,7 +663,7 @@ describe('Auth Validation', () => {
       HttpStatuses.BadRequest_400
     );
 
-    const notConfirmedUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const notConfirmedUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     expect(notConfirmedUserDB?.isConfirmed).toBeFalsy();
     expect(confirmUserByCodeResponse.errorsMessages[0].field).toBe('code');
     expect(confirmUserByCodeResponse.errorsMessages[0].message).toBe('Confirmation code is expired');
@@ -689,11 +689,11 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUserLogin: string = createUserData.login;
     await registerUser(app, validUserAgents.userAgent_01, createUserData);
-    const createdUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const createdUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
     const createdUserId: string = String(createdUserDB?._id);
 
     const emailConfirmationDB: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     const confirmationCode: string | undefined = emailConfirmationDB?.confirmationCode;
     const testStatus: HttpStatuses = HttpStatuses.Unauthorized_401;
@@ -701,7 +701,7 @@ describe('Auth Validation', () => {
     await confirmUserByCode(app, invalidUserAgents.userAgent_01, confirmationCode, testStatus);
     await confirmUserByCode(app, invalidUserAgents.userAgent_02, confirmationCode, testStatus);
 
-    const notConfirmedUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const notConfirmedUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
     expect(notConfirmedUserDB?.isConfirmed).toBeFalsy();
     expect(nodemailerAdapterSendMailSpyAndMock).toHaveBeenCalledTimes(1);
     expect(usersServiceCreateSpy).toHaveBeenCalledTimes(1);
@@ -725,11 +725,11 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUserLogin: string = createUserData.login;
     await registerUser(app, validUserAgents.userAgent_01, createUserData);
-    const createdUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const createdUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
     const createdUserId: string = String(createdUserDB?._id);
 
     const emailConfirmationDB: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     await confirmUserByCode(
       app,
@@ -739,7 +739,7 @@ describe('Auth Validation', () => {
       true
     );
 
-    const notConfirmedUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const notConfirmedUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
     expect(notConfirmedUserDB?.isConfirmed).toBeFalsy();
     expect(nodemailerAdapterSendMailSpyAndMock).toHaveBeenCalledTimes(1);
     expect(usersServiceCreateSpy).toHaveBeenCalledTimes(1);
@@ -763,11 +763,11 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUserLogin: string = createUserData.login;
     await registerUser(app, validUserAgents.userAgent_01, createUserData);
-    const createdUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const createdUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
     const createdUserId: string = String(createdUserDB?._id);
 
     const emailConfirmationDB: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     const confirmationCode: string | undefined = emailConfirmationDB?.confirmationCode;
     const testStatus_01: HttpStatuses = HttpStatuses.BadRequest_400;
@@ -784,7 +784,7 @@ describe('Auth Validation', () => {
     await setTimeout(5000);
     await confirmUserByCode(app, validUserAgents.userAgent_01, confirmationCode, testStatus_01);
 
-    const confirmedUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const confirmedUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
     expect(confirmedUserDB?.isConfirmed).toBeTruthy();
     expect(nodemailerAdapterSendMailSpyAndMock).toHaveBeenCalledTimes(1);
     expect(usersServiceCreateSpy).toHaveBeenCalledTimes(1);
@@ -938,11 +938,11 @@ describe('Auth Validation', () => {
     const createdUserLogin: string = createUserData.login;
     const testUserAgent: string = validUserAgents.userAgent_01;
     await registerUser(app, testUserAgent, createUserData);
-    const createdUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const createdUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
     const createdUserId: string = String(createdUserDB?._id);
 
     const emailConfirmationDB_01: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     await confirmUserByCode(app, testUserAgent, emailConfirmationDB_01?.confirmationCode);
 
@@ -953,10 +953,10 @@ describe('Auth Validation', () => {
       HttpStatuses.BadRequest_400
     );
 
-    const confirmedUserDBAfterResending: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const confirmedUserDBAfterResending: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
 
     const emailConfirmationDB_02: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     expect(confirmedUserDBAfterResending?.isConfirmed).toBeTruthy();
     expect(emailConfirmationDB_02).toBeNull();
@@ -985,21 +985,21 @@ describe('Auth Validation', () => {
     const createdUserLogin: string = createUserData.login;
     const createdUserEmail: string = createUserData.email;
     await registerUser(app, validUserAgents.userAgent_01, createUserData);
-    const createdUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const createdUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
     const createdUserId: string = String(createdUserDB?._id);
 
     const emailConfirmationDB_01: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     const testStatus: HttpStatuses = HttpStatuses.Unauthorized_401;
 
     await resendConfirmationEmail(app, invalidUserAgents.userAgent_01, createdUserEmail, testStatus);
     await resendConfirmationEmail(app, invalidUserAgents.userAgent_02, createdUserEmail, testStatus);
 
-    const createdUserDBAfterResending: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const createdUserDBAfterResending: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
 
     const emailConfirmationDB_02: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     expect(createdUserDBAfterResending?.isConfirmed).toBeFalsy();
     expect(emailConfirmationDB_01?.confirmationCode).toBe(emailConfirmationDB_02?.confirmationCode);
@@ -1026,18 +1026,18 @@ describe('Auth Validation', () => {
     const createdUserLogin: string = createUserData.login;
     const testUserAgent: string = validUserAgents.userAgent_01;
     await registerUser(app, testUserAgent, createUserData);
-    const createdUserDB: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const createdUserDB: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
     const createdUserId: string = String(createdUserDB?._id);
 
     const emailConfirmationDB_01: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     await resendConfirmationEmail(app, testUserAgent, createUserData.email, HttpStatuses.Unauthorized_401, true);
 
-    const createdUserDBAfterResending: UserDBType | null = await usersRepository.findByLoginOrEmail(createdUserLogin);
+    const createdUserDBAfterResending: UserDBType | null = await UsersRepository.findByLoginOrEmail(createdUserLogin);
 
     const emailConfirmationDB_02: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     expect(createdUserDBAfterResending?.isConfirmed).toBeFalsy();
     expect(emailConfirmationDB_01?.confirmationCode).toBe(emailConfirmationDB_02?.confirmationCode);
@@ -1107,7 +1107,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
     const testStatus: HttpStatuses = HttpStatuses.BadRequest_400;
 
@@ -1152,12 +1152,12 @@ describe('Auth Validation', () => {
     );
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
-      await usersRepository.findById(createdUserId);
+      await UsersRepository.findById(createdUserId);
 
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -1218,7 +1218,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -1229,12 +1229,12 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: validUserEmails.email_01 });
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
-      await usersRepository.findById(createdUserId);
+      await UsersRepository.findById(createdUserId);
 
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -1284,7 +1284,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -1298,12 +1298,12 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, invalidUserAgents.userAgent_02, createUserData.email, testStatus);
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
-      await usersRepository.findById(createdUserId);
+      await UsersRepository.findById(createdUserId);
 
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -1353,7 +1353,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -1366,12 +1366,12 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, createUserData.email, testStatus, true);
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
-      await usersRepository.findById(createdUserId);
+      await UsersRepository.findById(createdUserId);
 
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -1421,7 +1421,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -1443,12 +1443,12 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
-      await usersRepository.findById(createdUserId);
+      await UsersRepository.findById(createdUserId);
 
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -1500,7 +1500,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -1511,7 +1511,7 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     const testStatus: HttpStatuses = HttpStatuses.BadRequest_400;
 
@@ -1622,8 +1622,8 @@ describe('Auth Validation', () => {
       testStatus
     );
 
-    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -1740,7 +1740,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -1757,8 +1757,8 @@ describe('Auth Validation', () => {
       HttpStatuses.BadRequest_400
     );
 
-    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -1809,7 +1809,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -1817,7 +1817,7 @@ describe('Auth Validation', () => {
       password: createUserData.password,
     });
 
-    await authRepository.createRecoveryPasswordCodeData(
+    await AuthRepository.createRecoveryPasswordCodeData(
       createdUserId,
       expiredRecoveryCodeData.recoveryCode,
       expiredRecoveryCodeData.expirationDate
@@ -1830,8 +1830,8 @@ describe('Auth Validation', () => {
       HttpStatuses.BadRequest_400
     );
 
-    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -1882,7 +1882,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -1893,7 +1893,7 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     const testStatus: HttpStatuses = HttpStatuses.Unauthorized_401;
 
@@ -1911,8 +1911,8 @@ describe('Auth Validation', () => {
       testStatus
     );
 
-    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -1961,7 +1961,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -1972,7 +1972,7 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(
       app,
@@ -1982,8 +1982,8 @@ describe('Auth Validation', () => {
       true
     );
 
-    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -2032,7 +2032,7 @@ describe('Auth Validation', () => {
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -2045,7 +2045,7 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
 
     const recoveryPasswordCodeDataDB_01: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(app, testUserAgent, {
       newPassword: validUserPasswords.password_01,
@@ -2055,7 +2055,7 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
 
     const recoveryPasswordCodeDataDB_02: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(app, testUserAgent, {
       newPassword: validUserPasswords.password_01,
@@ -2065,7 +2065,7 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
 
     const recoveryPasswordCodeDataDB_03: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(app, testUserAgent, {
       newPassword: validUserPasswords.password_01,
@@ -2075,7 +2075,7 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
 
     const recoveryPasswordCodeDataDB_04: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(app, testUserAgent, {
       newPassword: validUserPasswords.password_01,
@@ -2085,7 +2085,7 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
 
     const recoveryPasswordCodeDataDB_05: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(app, testUserAgent, {
       newPassword: validUserPasswords.password_01,
@@ -2095,7 +2095,7 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email }, testStatus);
 
     const recoveryPasswordCodeDataDB_06: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(
       app,
@@ -2107,7 +2107,7 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email }, testStatus);
 
     const recoveryPasswordCodeDataDB_07: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(
       app,
@@ -2122,15 +2122,15 @@ describe('Auth Validation', () => {
     await sendRecoveryPasswordCode(app, testUserAgent, { email: createUserData.email });
 
     const recoveryPasswordCodeDataDB_08: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(app, testUserAgent, {
       newPassword: validUserPasswords.password_01,
       recoveryCode: recoveryPasswordCodeDataDB_08?.recoveryCode,
     });
 
-    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
     await getSecurityDeviceList(app, testUserAgent, refreshToken, undefined, HttpStatuses.Unauthorized_401);
     expect(createdUserDB?.passwordHash).not.toBe(createdUserDBAfterSettingNewPassword?.passwordHash);
     expect(sessions).toBeInstanceOf(Array);

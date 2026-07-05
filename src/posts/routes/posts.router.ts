@@ -3,21 +3,19 @@ import { inputValidationResultMiddleware } from '../../core/middlewares/validati
 import { basicAuthGuardMiddleware } from '../../auth/middlewares/guard-middlewares/basic-auth.guard-middleware';
 import { idValidation, postIdValidation } from '../../core/middlewares/validation/params-id-validation.middlewares';
 import { createPostInputValidation, updatePostInputValidation } from '../validation/posts-input-validation.middlewares';
-import { createPostHandler } from './handlers/create-post.handler';
-import { getPostListHandler } from './handlers/get-post-list.handler';
-import { getPostByIdHandler } from './handlers/get-post-by-id.handler';
-import { updatePostByIdHandler } from './handlers/update-post-by-id.handler';
 import { paginationValidationMiddleware } from '../../core/middlewares/validation/pagination-validation.middleware';
 import { PostSortFieldQueryInputDTO } from './input-dto/query/post-sort-field-query.input-dto';
-import { deletePostByIdHandler } from './handlers/delete-post-by-id.handler';
 import { CommentSortFieldQueryInputDTO } from '../../comments/routes/input-dto/query/comment-sort-field-query.input-dto';
-import { getCommentListByPostIdHandler } from './handlers/get-comment-list-by-post-id.handler';
 import { accessTokenGuardMiddleware } from '../../auth/middlewares/guard-middlewares/access-token.guard-middleware';
 import { createCommentForPostInputValidation } from '../../comments/validation/comments-input-validation.middlewares';
-import { createCommentForPostHandler } from './handlers/creat-comment-for-post-by-id.handler';
 import { SETTINGS } from '../../core/settings/settings';
+import { container } from '../../composition-root';
+import { PostsController } from './posts.controller';
 
-/*Роутер из Express для работы с данными по постам.*/
+/**/
+const postsController = container.get<PostsController>(PostsController);
+
+/*Роутер из Express для работы с постами.*/
 export const postsRouter: Router = Router({});
 
 /*Конфигурируем роутер "postsRouter".*/
@@ -28,7 +26,7 @@ postsRouter
     postIdValidation,
     paginationValidationMiddleware(CommentSortFieldQueryInputDTO),
     inputValidationResultMiddleware,
-    getCommentListByPostIdHandler
+    postsController.getCommentListByPostIdHandler.bind(postsController)
   )
   /*002. POST-запрос по добавлению комментария в пост по ID, используя URI-параметры.*/
   .post(
@@ -37,14 +35,14 @@ postsRouter
     postIdValidation,
     createCommentForPostInputValidation,
     inputValidationResultMiddleware,
-    createCommentForPostHandler
+    postsController.createCommentForPostHandler.bind(postsController)
   )
   /*003. GET-запрос по получению постов с пагинацией, используя query-параметры.*/
   .get(
     SETTINGS.GET_POST_LIST_PATH,
     paginationValidationMiddleware(PostSortFieldQueryInputDTO),
     inputValidationResultMiddleware,
-    getPostListHandler
+    postsController.getPostListHandler.bind(postsController)
   )
   /*004. POST-запрос по добавлению поста.*/
   .post(
@@ -52,10 +50,15 @@ postsRouter
     basicAuthGuardMiddleware,
     createPostInputValidation,
     inputValidationResultMiddleware,
-    createPostHandler
+    postsController.createPostHandler.bind(postsController)
   )
   /*005. GET-запрос по получению поста по ID, используя URI-параметры.*/
-  .get(SETTINGS.GET_POST_BY_ID_PATH, idValidation, inputValidationResultMiddleware, getPostByIdHandler)
+  .get(
+    SETTINGS.GET_POST_BY_ID_PATH,
+    idValidation,
+    inputValidationResultMiddleware,
+    postsController.getPostByIdHandler.bind(postsController)
+  )
   /*006. PUT-запрос по изменению поста по ID, используя URI-параметры.*/
   .put(
     SETTINGS.UPDATE_POST_BY_ID_PATH,
@@ -63,7 +66,7 @@ postsRouter
     idValidation,
     updatePostInputValidation,
     inputValidationResultMiddleware,
-    updatePostByIdHandler
+    postsController.updatePostByIdHandler.bind(postsController)
   )
   /*007. DELETE-запрос по удалению поста по ID, используя URI-параметры.*/
   .delete(
@@ -71,5 +74,5 @@ postsRouter
     basicAuthGuardMiddleware,
     idValidation,
     inputValidationResultMiddleware,
-    deletePostByIdHandler
+    postsController.deletePostByIdHandler.bind(postsController)
   );

@@ -1,36 +1,36 @@
-import { usersService } from '../../src/users/application/users.service';
-import { authService } from '../../src/auth/application/auth.service';
-import { authRepository } from '../../src/auth/repositories/auth.repository';
-import { usersRepository } from '../../src/users/repositories/users.repository';
+import { UsersService } from '../../src/users/application/users.service';
+import { AuthService } from '../../src/auth/application/auth.service';
+import { AuthRepository } from '../../src/auth/repositories/auth.repository';
+import { UsersRepository } from '../../src/users/repositories/users.repository';
 
 /*Шпион для метода "usersService.create()".*/
-export const createUsersServiceCreateSpy = (): jest.SpyInstance => jest.spyOn(usersService, 'create');
-export const createUsersServiceConfirmByCodeSpy = (): jest.SpyInstance => jest.spyOn(usersService, 'confirmByCode');
+export const createUsersServiceCreateSpy = (): jest.SpyInstance => jest.spyOn(UsersService, 'create');
+export const createUsersServiceConfirmByCodeSpy = (): jest.SpyInstance => jest.spyOn(UsersService, 'confirmByCode');
 
 export const createUsersServiceUpdatePasswordByRecoveryCodeSpy = (): jest.SpyInstance => {
-  return jest.spyOn(usersService, 'updatePasswordByRecoveryCode');
+  return jest.spyOn(UsersService, 'updatePasswordByRecoveryCode');
 };
 
 export const createUsersRepositoryUpdatePasswordHashByIdSpy = (): jest.SpyInstance => {
-  return jest.spyOn(usersRepository, 'updatePasswordHashById');
+  return jest.spyOn(UsersRepository, 'updatePasswordHashById');
 };
 
 export const createAuthServiceUpdateEmailConfirmationByUserIdSpy = (): jest.SpyInstance => {
-  return jest.spyOn(authService, 'updateEmailConfirmationByUserId');
+  return jest.spyOn(AuthService, 'updateEmailConfirmationByUserId');
 };
 
 export const createAuthServiceDeleteRecoveryCodeDataSpy = (): jest.SpyInstance => {
-  return jest.spyOn(authService, 'deleteRecoveryCodeDataByCode');
+  return jest.spyOn(AuthService, 'deleteRecoveryCodeDataByCode');
 };
 
 export const createAuthServiceRevokeAllSessionsByUserIdSpy = (): jest.SpyInstance => {
-  return jest.spyOn(authService, 'revokeAllSessionsByUserId');
+  return jest.spyOn(AuthService, 'revokeAllSessionsByUserId');
 };
 
 export const createAuthRepositoryCreateRecoveryPasswordCodeDataSpy = (): jest.SpyInstance => {
-  return jest.spyOn(authRepository, 'createRecoveryPasswordCodeData');
+  return jest.spyOn(AuthRepository, 'createRecoveryPasswordCodeData');
 };
 
 export const createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy = (): jest.SpyInstance => {
-  return jest.spyOn(authRepository, 'deleteAllRecoveryCodesDataByUserId');
+  return jest.spyOn(AuthRepository, 'deleteAllRecoveryCodesDataByUserId');
 };

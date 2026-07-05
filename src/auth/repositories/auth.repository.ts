@@ -7,9 +7,11 @@ import { EmailConfirmationType } from '../application/types/email-сonfirmation.
 import { EmailConfirmationDBType } from './types/email-сonfirmation-db.type';
 import { RecoveryCodeDataType } from '../application/types/recovery-code-data.type';
 import { RecoveryCodeDataDBType } from './types/recovery-code-data-db.type';
+import { injectable } from 'inversify';
 
 /*Репозиторий для работы с аутентификацией и авторизацией в БД.*/
-export const authRepository = {
+@injectable()
+export class AuthRepository {
   /*Метод для добавления сессии в БД.*/
   async createSession(
     userId: string,
@@ -31,7 +33,7 @@ export const authRepository = {
 
     /*Возвращаем ID созданной сессии.*/
     return insertResult.insertedId.toString();
-  },
+  }
 
   /*Метод для создания данных о подтверждении регистрации пользователя в БД.*/
   async createEmailConfirmation(userId: string, confirmationCode: string, expirationDate: Date): Promise<string> {
@@ -44,7 +46,7 @@ export const authRepository = {
 
     /*Возвращаем ID созданных данных о подтверждении регистрации пользователя.*/
     return insertResult.insertedId.toString();
-  },
+  }
 
   /*Метод для добавления записи в журнал лимитов запросов в БД.*/
   async createRequestRateLimitLog(requestRateLimitLog: RequestRateLimitLogType): Promise<string> {
@@ -54,7 +56,7 @@ export const authRepository = {
 
     /*Возвращаем ID созданной записи в журнале лимитов запросов.*/
     return insertResult.insertedId.toString();
-  },
+  }
 
   /*Метод для подсчета количества записей в журнале лимитов запросов за указанный период по IP-адресу и URL в БД.*/
   async countRequestRateLimitLogsByIpAndUrl(ip: string, url: string, seconds: number): Promise<number> {
@@ -65,7 +67,7 @@ export const authRepository = {
       url: url,
       timestamp: { $gte: new Date(Date.now() - seconds * 1000) },
     });
-  },
+  }
 
   /*Метод для создания данных о коде восстановления пароля пользователя в БД.*/
   async createRecoveryPasswordCodeData(userId: string, recoveryCode: string, expirationDate: Date): Promise<string> {
@@ -79,7 +81,7 @@ export const authRepository = {
 
     /*Возвращаем ID созданных данных о коде восстановления пароля пользователя.*/
     return insertResult.insertedId.toString();
-  },
+  }
 
   /*Метод для поиска сессии по ID пользователя и ID устройства пользователя в БД.*/
   async findSessionByUserIdAndDeviceId(userId: string, deviceId: string): Promise<SessionDBType | null> {
@@ -87,7 +89,7 @@ export const authRepository = {
     const session: SessionDBType | null = await db.sessionsCollection.findOne({ userId, deviceId });
     /*Если сессия была найдена, то возвращаем ее, иначе возвращаем null.*/
     return session ?? null;
-  },
+  }
 
   /*Метод для поиска сессии по ID пользователя, ID устройства пользователя и дате выдачи RT в БД.*/
   async findSessionByUserIdAndDeviceIdAndIat(
@@ -99,13 +101,13 @@ export const authRepository = {
     const session: SessionDBType | null = await db.sessionsCollection.findOne({ userId, deviceId, iat });
     /*Если сессия была найдена, то возвращаем ее, иначе возвращаем null.*/
     return session ?? null;
-  },
+  }
 
   /*Метод для поиска сессий по ID пользователя в БД.*/
   async findAllSessionsByUserId(userId: string): Promise<SessionDBType[]> {
     /*Просим коллекцию "sessionsCollection" найти сессии по ID пользователя в БД.*/
     return await db.sessionsCollection.find({ userId }).toArray();
-  },
+  }
 
   /*Метод для поиска данных о подтверждении регистрации пользователя по коду подтверждения в БД.*/
   async findEmailConfirmationByCode(code: string): Promise<EmailConfirmationDBType | null> {
@@ -117,7 +119,7 @@ export const authRepository = {
 
     /*Если данные о подтверждении регистрации пользователя были найдены, то возвращаем их, иначе возвращаем null.*/
     return emailConfirmation ?? null;
-  },
+  }
 
   /*Метод для поиска данных о подтверждении регистрации пользователя по ID пользователя в БД.*/
   async findEmailConfirmationByUserId(userId: string): Promise<EmailConfirmationDBType | null> {
@@ -126,7 +128,7 @@ export const authRepository = {
     const emailConfirmation: EmailConfirmationDBType | null = await db.emailConfirmationsCollection.findOne({ userId });
     /*Если данные о подтверждении регистрации пользователя были найдены, то возвращаем их, иначе возвращаем null.*/
     return emailConfirmation ?? null;
-  },
+  }
 
   /*Метод для поиска данных о коде восстановления пароля пользователя по коду в БД.*/
   async findRecoveryPasswordCodeDataByCode(recoveryCode: string): Promise<RecoveryCodeDataDBType | null> {
@@ -138,7 +140,7 @@ export const authRepository = {
 
     /*Если данные о коде восстановления пароля пользователя были найдены, то возвращаем их, иначе возвращаем null.*/
     return recoveryCodeData ?? null;
-  },
+  }
 
   /*Метод для поиска данных о коде восстановления пароля пользователя по ID пользователя в БД.*/
   async findRecoveryPasswordCodeDataByUserId(userId: string): Promise<RecoveryCodeDataDBType | null> {
@@ -150,7 +152,7 @@ export const authRepository = {
 
     /*Если данные о коде восстановления пароля пользователя были найдены, то возвращаем их, иначе возвращаем null.*/
     return recoveryCodeData ?? null;
-  },
+  }
 
   /*Метод для изменения сессии по дате создания RT в БД.*/
   async updateSessionByIat(currentIat: Date, iat: Date, exp: Date, ip: string): Promise<number> {
@@ -162,7 +164,7 @@ export const authRepository = {
 
     /*Возвращаем количество сессий, попавших под фильтр.*/
     return updateResult.matchedCount;
-  },
+  }
 
   /*Метод для изменения данных о подтверждении регистрации пользователя по ID пользователя в БД.*/
   async updateEmailConfirmationByUserId(
@@ -179,7 +181,7 @@ export const authRepository = {
 
     /*Возвращаем количество данных о подтверждении регистрации пользователя, попавших под фильтр.*/
     return updateResult.matchedCount;
-  },
+  }
 
   /*Метод для удаления сессии по дате создания RT в БД.*/
   async deleteSessionByIat(iat: Date): Promise<number> {
@@ -187,7 +189,7 @@ export const authRepository = {
     const deleteResult: DeleteResult = await db.sessionsCollection.deleteOne({ iat });
     /*Возвращаем количество удаленных сессий.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления сессии по ID пользователя и ID устройства пользователя в БД.*/
   async deleteSessionByUserIdAndDeviceId(userId: string, deviceId: string): Promise<number> {
@@ -195,7 +197,7 @@ export const authRepository = {
     const deleteResult: DeleteResult = await db.sessionsCollection.deleteOne({ userId, deviceId });
     /*Возвращаем количество удаленных сессий.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления всех сессий пользователя, кроме текущей, в БД.*/
   async deleteSessionsExceptCurrentDevice(userId: string, deviceId: string): Promise<number> {
@@ -207,7 +209,7 @@ export const authRepository = {
 
     /*Возвращаем количество удаленных сессий.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления всех сессий пользователя по ID пользователя в БД.*/
   async deleteAllSessionsByUserId(userId: string): Promise<number> {
@@ -215,7 +217,7 @@ export const authRepository = {
     const deleteResult: DeleteResult = await db.sessionsCollection.deleteMany({ userId });
     /*Возвращаем количество удаленных сессий.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления данных о подтверждении регистрации пользователя по ID пользователя в БД.*/
   async deleteEmailConfirmationByUserId(userId: string): Promise<number> {
@@ -224,7 +226,7 @@ export const authRepository = {
     const deleteResult: DeleteResult = await db.emailConfirmationsCollection.deleteOne({ userId });
     /*Возвращаем количество удаленных данных о подтверждении регистрации пользователя.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления данных о коде восстановления пароля пользователя по коду в БД.*/
   async deleteRecoveryCodeDataByCode(recoveryCode: string): Promise<number> {
@@ -233,7 +235,7 @@ export const authRepository = {
     const deleteResult: DeleteResult = await db.recoveryPasswordCodesDataCollection.deleteOne({ recoveryCode });
     /*Возвращаем количество удаленных данных о коде восстановления пароля пользователя.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления данных о всех кодах восстановления пароля пользователя по ID пользователя в БД.*/
   async deleteAllRecoveryCodesDataByUserId(userId: string): Promise<number> {
@@ -242,5 +244,5 @@ export const authRepository = {
     const deleteResult: DeleteResult = await db.recoveryPasswordCodesDataCollection.deleteMany({ userId });
     /*Возвращаем количество удаленных данных о коде восстановления пароля пользователя.*/
     return deleteResult.deletedCount;
-  },
-};
+  }
+}

@@ -3,16 +3,18 @@ import { db } from '../../db/mongodb/mongo.db';
 import { BlogType } from '../application/types/blog.type';
 import { UpdateBlogByIdInputDTO } from '../routes/input-dto/update-blog-by-id.input-dto';
 import { BlogDBType } from './types/blog-db.type';
+import { injectable } from 'inversify';
 
 /*Репозиторий для работы с блогами в БД.*/
-export const blogsRepository = {
+@injectable()
+export class BlogsRepository {
   /*Метод для добавления блога в БД.*/
   async create(newBlog: BlogType): Promise<string> {
     /*Просим коллекцию "blogsCollection" создать блог в БД.*/
     const insertResult: InsertOneResult<BlogType> = await db.blogsCollection.insertOne(newBlog);
     /*Возвращаем ID созданного блога.*/
     return insertResult.insertedId.toString();
-  },
+  }
 
   /*Метод для поиска блога по ID в БД.*/
   async findById(id: string): Promise<BlogDBType | null> {
@@ -20,7 +22,7 @@ export const blogsRepository = {
     const blog: BlogDBType | null = await db.blogsCollection.findOne({ _id: new ObjectId(id) });
     /*Если блог был найден, то возвращаем его, иначе возвращаем null.*/
     return blog ?? null;
-  },
+  }
 
   /*Метод для изменения блога по ID в БД.*/
   async updateById(id: string, dto: UpdateBlogByIdInputDTO): Promise<number> {
@@ -32,7 +34,7 @@ export const blogsRepository = {
 
     /*Возвращаем количество блогов, попавших под фильтр.*/
     return updateResult.matchedCount;
-  },
+  }
 
   /*Метод для удаления блога по ID в БД.*/
   async deleteById(id: string): Promise<number> {
@@ -40,5 +42,5 @@ export const blogsRepository = {
     const deleteResult: DeleteResult = await db.blogsCollection.deleteOne({ _id: new ObjectId(id) });
     /*Возвращаем количество удаленных блогов.*/
     return deleteResult.deletedCount;
-  },
-};
+  }
+}

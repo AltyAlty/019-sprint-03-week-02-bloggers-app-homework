@@ -3,16 +3,18 @@ import { db } from '../../db/mongodb/mongo.db';
 import { DeleteResult, InsertOneResult, ObjectId, UpdateResult } from 'mongodb';
 import { CommentType } from '../application/types/comment.type';
 import { CommentDBType } from './types/comment-db.type';
+import { injectable } from 'inversify';
 
 /*Репозиторий для работы с комментариями в БД.*/
-export const commentsRepository = {
+@injectable()
+export class CommentsRepository {
   /*Метод для добавления комментария в БД.*/
   async create(newComment: CommentType): Promise<string> {
     /*Просим коллекцию "commentsCollection" создать комментарий в БД.*/
     const insertResult: InsertOneResult<CommentType> = await db.commentsCollection.insertOne(newComment);
     /*Возвращаем ID созданного комментария.*/
     return insertResult.insertedId.toString();
-  },
+  }
 
   /*Метод для поиска комментария по ID в БД.*/
   async findById(id: string): Promise<CommentDBType | null> {
@@ -20,7 +22,7 @@ export const commentsRepository = {
     const comment: CommentDBType | null = await db.commentsCollection.findOne({ _id: new ObjectId(id) });
     /*Если комментарий был найден, то возвращаем его, иначе возвращаем null.*/
     return comment ?? null;
-  },
+  }
 
   /*Метод для изменения комментария по ID в БД.*/
   async updateById(id: string, dto: UpdateCommentByIdInputDTO): Promise<number> {
@@ -32,7 +34,7 @@ export const commentsRepository = {
 
     /*Возвращаем количество измененных комментариев.*/
     return updateResult.matchedCount;
-  },
+  }
 
   /*Метод для удаления комментария по ID в БД.*/
   async deleteById(id: string): Promise<number> {
@@ -40,7 +42,7 @@ export const commentsRepository = {
     const deleteResult: DeleteResult = await db.commentsCollection.deleteOne({ _id: new ObjectId(id) });
     /*Возвращаем количество удаленных комментариев.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления комментариев по ID поста в БД.*/
   async deleteAllByPostId(postId: string): Promise<number> {
@@ -48,7 +50,7 @@ export const commentsRepository = {
     const deleteResult: DeleteResult = await db.commentsCollection.deleteMany({ postId });
     /*Возвращаем количество удаленных комментариев.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления комментариев по ID пользователя в БД.*/
   async deleteAllByUserId(userId: string): Promise<number> {
@@ -56,7 +58,7 @@ export const commentsRepository = {
     const deleteResult: DeleteResult = await db.commentsCollection.deleteMany({ 'commentatorInfo.userId': userId });
     /*Возвращаем количество удаленных комментариев.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления комментариев по ID постов в БД.*/
   async deleteAllByPostIds(postIds: string[]): Promise<number> {
@@ -64,5 +66,5 @@ export const commentsRepository = {
     const deleteResult: DeleteResult = await db.commentsCollection.deleteMany({ postId: { $in: postIds } });
     /*Возвращаем количество удаленных комментариев.*/
     return deleteResult.deletedCount;
-  },
-};
+  }
+}

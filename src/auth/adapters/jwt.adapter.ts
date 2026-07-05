@@ -1,7 +1,9 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
+import { injectable } from 'inversify';
 
 /*Адаптер для работы с библиотекой jsonwebtoken.*/
-export const jwtAdapter = {
+@injectable()
+export class JwtAdapter {
   /*Метод для создания AT.*/
   async createAccessToken(userId: string, secret: string, time: string): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -12,7 +14,7 @@ export const jwtAdapter = {
 
       jwt.sign({ userId }, secret, { expiresIn: time as SignOptions['expiresIn'] }, onSignComplete);
     });
-  },
+  }
 
   /*Метод для создания RT.*/
   async createRefreshToken(userId: string, deviceId: string, secret: string, time: string): Promise<string> {
@@ -24,7 +26,7 @@ export const jwtAdapter = {
 
       jwt.sign({ userId, deviceId }, secret, { expiresIn: time as SignOptions['expiresIn'] }, onSignComplete);
     });
-  },
+  }
 
   /*Метод для верификации AT.*/
   async verifyAccessToken(token: string, secret: string): Promise<{ userId: string } | null> {
@@ -37,7 +39,7 @@ export const jwtAdapter = {
 
       jwt.verify(token, secret, onVerifyComplete);
     });
-  },
+  }
 
   /*Метод для верификации RT.*/
   async verifyRefreshToken(token: string, secret: string): Promise<{ userId: string; deviceId: string } | null> {
@@ -50,7 +52,7 @@ export const jwtAdapter = {
 
       jwt.verify(token, secret, onVerifyComplete);
     });
-  },
+  }
 
   /*Метод для декодирования AT.*/
   async decodeAccessToken(token: string): Promise<{ userId: string; iat: number; exp: number } | null> {
@@ -69,7 +71,7 @@ export const jwtAdapter = {
     } catch (error) {
       return null;
     }
-  },
+  }
 
   /*Метод для декодирования RT.*/
   async decodeRefreshToken(
@@ -92,17 +94,17 @@ export const jwtAdapter = {
     } catch (error) {
       return null;
     }
-  },
+  }
 
   /*Синхронный метод для создания AT.*/
   createAccessTokenSync(userId: string, secret: string, time: string): string {
     return jwt.sign({ userId }, secret, { expiresIn: time as SignOptions['expiresIn'] });
-  },
+  }
 
   /*Синхронный метод для создания RT.*/
   createRefreshTokenSync(userId: string, deviceId: string, secret: string, time: string): string {
     return jwt.sign({ userId, deviceId }, secret, { expiresIn: time as SignOptions['expiresIn'] });
-  },
+  }
 
   /*Синхронный метод для верификации AT.*/
   verifyAccessTokenSync(token: string, secret: string): { userId: string } | null {
@@ -111,7 +113,7 @@ export const jwtAdapter = {
     } catch (error) {
       return null;
     }
-  },
+  }
 
   /*Синхронный метод для верификации RT.*/
   verifyRefreshTokenSync(token: string, secret: string): { userId: string; deviceId: string } | null {
@@ -120,5 +122,5 @@ export const jwtAdapter = {
     } catch (error) {
       return null;
     }
-  },
-};
+  }
+}

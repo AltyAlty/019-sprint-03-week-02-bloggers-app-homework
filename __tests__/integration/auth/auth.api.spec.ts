@@ -1,5 +1,5 @@
 import { createUser } from '../../utils/users/create-user.test-util';
-import { jwtAdapter } from '../../../src/auth/adapters/jwt.adapter';
+import { JwtAdapter } from '../../../src/auth/adapters/jwt.adapter';
 import { getCreateUserInputDTO } from '../../utils/users/input-dto-utils/get-create-user-input-dto.test-util';
 import { loginUserReturnAccessToken } from '../../utils/auth/login-user-return-access-token.test-util';
 import { doBeforeTestsWithMongoMemoryServer } from '../../utils/common/do-before-tests.test-util';
@@ -16,7 +16,7 @@ import { delay } from '../../utils/common/delay.test-util';
 import { setTimeout } from 'timers/promises';
 import { getSecurityDeviceList } from '../../utils/security-devices/get-security-device-list.test-util';
 import { SecurityDeviceListOutputDTO } from '../../../src/security-devices/routes/output-dto/security-device-list.output-dto';
-import { authRepository } from '../../../src/auth/repositories/auth.repository';
+import { AuthRepository } from '../../../src/auth/repositories/auth.repository';
 import { SessionDBType } from '../../../src/auth/repositories/types/session-db.type';
 import { SecurityDeviceOutputDTO } from '../../../src/security-devices/routes/output-dto/security-device.output-dto';
 import { validUserAgents } from '../../test-data/auth.test-data';
@@ -47,7 +47,7 @@ describe('Auth API', () => {
       password: createUserData.password,
     });
 
-    const verifiedAccessTokenPayload: { userId: string } | null = await jwtAdapter.verifyAccessToken(
+    const verifiedAccessTokenPayload: { userId: string } | null = await JwtAdapter.verifyAccessToken(
       accessToken,
       SETTINGS.AT_SECRET!
     );
@@ -55,13 +55,13 @@ describe('Auth API', () => {
     const verifiedAccessTokenPayloadUserId: string | undefined = verifiedAccessTokenPayload?.userId;
 
     const verifiedRefreshTokenPayload: { userId: string; deviceId: string } | null =
-      await jwtAdapter.verifyRefreshToken(refreshToken, SETTINGS.RT_SECRET!);
+      await JwtAdapter.verifyRefreshToken(refreshToken, SETTINGS.RT_SECRET!);
 
     const verifiedRefreshTokenPayloadUserId: string | undefined = verifiedRefreshTokenPayload?.userId;
     const verifiedRefreshTokenPayloadDeviceId: string | undefined = verifiedRefreshTokenPayload?.deviceId;
 
     const decodedAccessTokenPayload: { userId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeAccessToken(accessToken);
+      await JwtAdapter.decodeAccessToken(accessToken);
 
     const decodedAccessTokenPayloadUserId: string | undefined = decodedAccessTokenPayload?.userId;
     const decodedAccessTokenPayloadIat: number | undefined = decodedAccessTokenPayload?.iat;
@@ -70,7 +70,7 @@ describe('Auth API', () => {
     const decodedAccessTokenPayloadExpDate: Date = new Date(decodedAccessTokenPayloadExp! * 1000);
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeRefreshToken(refreshToken);
+      await JwtAdapter.decodeRefreshToken(refreshToken);
 
     const decodedRefreshTokenPayloadUserId: string | undefined = decodedRefreshTokenPayload?.userId;
     const decodedRefreshTokenPayloadDeviceId: string | undefined = decodedRefreshTokenPayload?.deviceId;
@@ -78,7 +78,7 @@ describe('Auth API', () => {
     const decodedRefreshTokenPayloadExp: number | undefined = decodedRefreshTokenPayload?.exp;
     const decodedRefreshTokenPayloadIatDate: Date = new Date(decodedRefreshTokenPayloadIat! * 1000);
     const decodedRefreshTokenPayloadExpDate: Date = new Date(decodedRefreshTokenPayloadExp! * 1000);
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
     const session = sessions[0];
     const sessionUserId: string = session.userId;
     const sessionDeviceId: string = session.deviceId;
@@ -159,7 +159,7 @@ describe('Auth API', () => {
       password: createUserData.password,
     });
 
-    const verifiedAccessTokenPayload: { userId: string } | null = await jwtAdapter.verifyAccessToken(
+    const verifiedAccessTokenPayload: { userId: string } | null = await JwtAdapter.verifyAccessToken(
       accessToken,
       SETTINGS.AT_SECRET!
     );
@@ -167,13 +167,13 @@ describe('Auth API', () => {
     const verifiedAccessTokenPayloadUserId: string | undefined = verifiedAccessTokenPayload?.userId;
 
     const verifiedRefreshTokenPayload: { userId: string; deviceId: string } | null =
-      await jwtAdapter.verifyRefreshToken(refreshToken, SETTINGS.RT_SECRET!);
+      await JwtAdapter.verifyRefreshToken(refreshToken, SETTINGS.RT_SECRET!);
 
     const verifiedRefreshTokenPayloadUserId: string | undefined = verifiedRefreshTokenPayload?.userId;
     const verifiedRefreshTokenPayloadDeviceId: string | undefined = verifiedRefreshTokenPayload?.deviceId;
 
     const decodedAccessTokenPayload: { userId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeAccessToken(accessToken);
+      await JwtAdapter.decodeAccessToken(accessToken);
 
     const decodedAccessTokenPayloadUserId: string | undefined = decodedAccessTokenPayload?.userId;
     const decodedAccessTokenPayloadIat: number | undefined = decodedAccessTokenPayload?.iat;
@@ -182,7 +182,7 @@ describe('Auth API', () => {
     const decodedAccessTokenPayloadExpDate: Date = new Date(decodedAccessTokenPayloadExp! * 1000);
 
     const decodedRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeRefreshToken(refreshToken);
+      await JwtAdapter.decodeRefreshToken(refreshToken);
 
     const decodedRefreshTokenPayloadUserId: string | undefined = decodedRefreshTokenPayload?.userId;
     const decodedRefreshTokenPayloadDeviceId: string | undefined = decodedRefreshTokenPayload?.deviceId;
@@ -190,7 +190,7 @@ describe('Auth API', () => {
     const decodedRefreshTokenPayloadExp: number | undefined = decodedRefreshTokenPayload?.exp;
     const decodedRefreshTokenPayloadIatDate: Date = new Date(decodedRefreshTokenPayloadIat! * 1000);
     const decodedRefreshTokenPayloadExpDate: Date = new Date(decodedRefreshTokenPayloadExp! * 1000);
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
     const session = sessions[0];
     const sessionUserId: string = session.userId;
     const sessionDeviceId: string = session.deviceId;
@@ -262,7 +262,7 @@ describe('Auth API', () => {
       password: createUserData.password,
     });
 
-    const verifiedOldAccessTokenPayload: { userId: string } | null = await jwtAdapter.verifyAccessToken(
+    const verifiedOldAccessTokenPayload: { userId: string } | null = await JwtAdapter.verifyAccessToken(
       oldAccessToken,
       SETTINGS.AT_SECRET!
     );
@@ -270,13 +270,13 @@ describe('Auth API', () => {
     const verifiedOldAccessTokenPayloadUserId: string | undefined = verifiedOldAccessTokenPayload?.userId;
 
     const verifiedOldRefreshTokenPayload: { userId: string; deviceId: string } | null =
-      await jwtAdapter.verifyRefreshToken(oldRefreshToken, SETTINGS.RT_SECRET!);
+      await JwtAdapter.verifyRefreshToken(oldRefreshToken, SETTINGS.RT_SECRET!);
 
     const verifiedOldRefreshTokenPayloadUserId: string | undefined = verifiedOldRefreshTokenPayload?.userId;
     const verifiedOldRefreshTokenPayloadDeviceId: string | undefined = verifiedOldRefreshTokenPayload?.deviceId;
 
     const decodedOldAccessTokenPayload: { userId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeAccessToken(oldAccessToken);
+      await JwtAdapter.decodeAccessToken(oldAccessToken);
 
     const decodedOldAccessTokenPayloadUserId: string | undefined = decodedOldAccessTokenPayload?.userId;
     const decodedOldAccessTokenPayloadIat: number | undefined = decodedOldAccessTokenPayload?.iat;
@@ -285,7 +285,7 @@ describe('Auth API', () => {
     const decodedOldAccessTokenPayloadExpDate: Date = new Date(decodedOldAccessTokenPayloadExp! * 1000);
 
     const decodedOldRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeRefreshToken(oldRefreshToken);
+      await JwtAdapter.decodeRefreshToken(oldRefreshToken);
 
     const decodedOldRefreshTokenPayloadUserId: string | undefined = decodedOldRefreshTokenPayload?.userId;
     const decodedOldRefreshTokenPayloadDeviceId: string | undefined = decodedOldRefreshTokenPayload?.deviceId;
@@ -293,7 +293,7 @@ describe('Auth API', () => {
     const decodedOldRefreshTokenPayloadExp: number | undefined = decodedOldRefreshTokenPayload?.exp;
     const decodedOldRefreshTokenPayloadIatDate: Date = new Date(decodedOldRefreshTokenPayloadIat! * 1000);
     const decodedOldRefreshTokenPayloadExpDate: Date = new Date(decodedOldRefreshTokenPayloadExp! * 1000);
-    const oldSessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const oldSessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
     const oldSession = oldSessions[0];
     const oldSessionUserId: string = oldSession.userId;
     const oldSessionDeviceId: string = oldSession.deviceId;
@@ -330,7 +330,7 @@ describe('Auth API', () => {
       hasPath: boolean;
     } = await refreshAccessAndRefreshTokens(app, testUserAgent, oldRefreshToken);
 
-    const verifiedNewAccessTokenPayload: { userId: string } | null = await jwtAdapter.verifyAccessToken(
+    const verifiedNewAccessTokenPayload: { userId: string } | null = await JwtAdapter.verifyAccessToken(
       newAccessToken,
       SETTINGS.AT_SECRET!
     );
@@ -338,13 +338,13 @@ describe('Auth API', () => {
     const verifiedNewAccessTokenPayloadUserId: string | undefined = verifiedNewAccessTokenPayload?.userId;
 
     const verifiedNewRefreshTokenPayload: { userId: string; deviceId: string } | null =
-      await jwtAdapter.verifyRefreshToken(newRefreshToken, SETTINGS.RT_SECRET!);
+      await JwtAdapter.verifyRefreshToken(newRefreshToken, SETTINGS.RT_SECRET!);
 
     const verifiedNewRefreshTokenPayloadUserId: string | undefined = verifiedNewRefreshTokenPayload?.userId;
     const verifiedNewRefreshTokenPayloadDeviceId: string | undefined = verifiedNewRefreshTokenPayload?.deviceId;
 
     const decodedNewAccessTokenPayload: { userId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeAccessToken(newAccessToken);
+      await JwtAdapter.decodeAccessToken(newAccessToken);
 
     const decodedNewAccessTokenPayloadUserId: string | undefined = decodedNewAccessTokenPayload?.userId;
     const decodedNewAccessTokenPayloadIat: number | undefined = decodedNewAccessTokenPayload?.iat;
@@ -353,7 +353,7 @@ describe('Auth API', () => {
     const decodedNewAccessTokenPayloadExpDate: Date = new Date(decodedNewAccessTokenPayloadExp! * 1000);
 
     const decodedNewRefreshTokenPayload: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeRefreshToken(newRefreshToken);
+      await JwtAdapter.decodeRefreshToken(newRefreshToken);
 
     const decodedNewRefreshTokenPayloadUserId: string | undefined = decodedNewRefreshTokenPayload?.userId;
     const decodedNewRefreshTokenPayloadDeviceId: string | undefined = decodedNewRefreshTokenPayload?.deviceId;
@@ -361,7 +361,7 @@ describe('Auth API', () => {
     const decodedNewRefreshTokenPayloadExp: number | undefined = decodedNewRefreshTokenPayload?.exp;
     const decodedNewRefreshTokenPayloadIatDate: Date = new Date(decodedNewRefreshTokenPayloadIat! * 1000);
     const decodedNewRefreshTokenPayloadExpDate: Date = new Date(decodedNewRefreshTokenPayloadExp! * 1000);
-    const newSessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const newSessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
     const updatedSession = newSessions[0];
     const updatedSessionUserId: string = updatedSession.userId;
     const updatedSessionDeviceId: string = updatedSession.deviceId;
@@ -471,7 +471,7 @@ describe('Auth API', () => {
     );
 
     const decodedRefreshTokenPayload_02: { userId: string; deviceId: string; iat: number; exp: number } | null =
-      await jwtAdapter.decodeRefreshToken(refreshToken_02);
+      await JwtAdapter.decodeRefreshToken(refreshToken_02);
 
     const decodedRefreshTokenPayloadUserId_02: string | undefined = decodedRefreshTokenPayload_02?.userId;
     const decodedRefreshTokenPayloadDeviceId_02: string | undefined = decodedRefreshTokenPayload_02?.deviceId;
@@ -482,7 +482,7 @@ describe('Auth API', () => {
 
     await revokeSession(app, testUserAgent_01, refreshToken_01);
 
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
     const session = sessions[0];
     const sessionUserId: string = session.userId;
     const sessionDeviceId: string = session.deviceId;

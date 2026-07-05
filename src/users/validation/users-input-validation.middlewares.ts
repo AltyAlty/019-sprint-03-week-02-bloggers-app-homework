@@ -1,6 +1,9 @@
 import { body, ValidationChain } from 'express-validator';
-import { usersRepository } from '../repositories/users.repository';
+import { UsersRepository } from '../repositories/users.repository';
 import { UserDBType } from '../repositories/types/user-db.type';
+import { container } from '../../composition-root';
+
+const usersRepository = container.get<UsersRepository>(UsersRepository);
 
 /*Middleware для проверки, что поле "login":
 1. Существует в запросе.

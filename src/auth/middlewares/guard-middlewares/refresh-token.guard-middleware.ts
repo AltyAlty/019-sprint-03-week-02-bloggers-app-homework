@@ -1,15 +1,22 @@
 import { NextFunction, Request, Response } from 'express';
 import { HttpStatuses } from '../../../core/types/http-statuses';
-import { jwtAdapter } from '../../adapters/jwt.adapter';
+import { JwtAdapter } from '../../adapters/jwt.adapter';
 import { SETTINGS } from '../../../core/settings/settings';
 import { IdType } from '../../../core/types/id.type';
-import { securityDevicesRepository } from '../../../security-devices/repositories/security-devices.repository';
-import { authRepository } from '../../repositories/auth.repository';
+import { SecurityDevicesRepository } from '../../../security-devices/repositories/security-devices.repository';
+import { AuthRepository } from '../../repositories/auth.repository';
 import { SessionDBType } from '../../repositories/types/session-db.type';
 import { SecurityDeviceDBType } from '../../../security-devices/repositories/types/security-device-db.type';
-import { usersRepository } from '../../../users/repositories/users.repository';
+import { UsersRepository } from '../../../users/repositories/users.repository';
 import { UserDBType } from '../../../users/repositories/types/user-db.type';
 import { ObjectId } from 'mongodb';
+import { container } from '../../../composition-root';
+
+/**/
+const jwtAdapter = container.get<JwtAdapter>(JwtAdapter);
+const authRepository = container.get<AuthRepository>(AuthRepository);
+const securityDevicesRepository = container.get<SecurityDevicesRepository>(SecurityDevicesRepository);
+const usersRepository = container.get<UsersRepository>(UsersRepository);
 
 /*Guard-middleware для проверки RT.*/
 export const refreshTokenGuardMiddleware = async (

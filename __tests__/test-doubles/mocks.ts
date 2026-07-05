@@ -1,6 +1,6 @@
-import { nodemailerAdapter } from '../../src/auth/adapters/nodemailer.adapter';
+import { NodemailerAdapter } from '../../src/auth/adapters/nodemailer.adapter';
 
 /*Моковый адаптер для работы с email.*/
-export const createMockEmailAdapter = (): jest.Mocked<typeof nodemailerAdapter> => {
+export const createMockEmailAdapter = (): jest.Mocked<typeof NodemailerAdapter> => {
   return { sendMail: jest.fn().mockResolvedValue(true) };
 };

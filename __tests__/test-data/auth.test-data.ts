@@ -1,4 +1,4 @@
-import { jwtAdapter } from '../../src/auth/adapters/jwt.adapter';
+import { JwtAdapter } from '../../src/auth/adapters/jwt.adapter';
 import { SETTINGS } from '../../src/core/settings/settings';
 import { invalidUserIds } from './users.test-data';
 import { invalidDeviceIds } from './security-devices.test-data';
@@ -9,7 +9,7 @@ import { add } from 'date-fns/add';
 export const invalidBasicAuthTokens = { BAT_01: 'token' };
 
 export const validAccessTokens = {
-  AT_01: jwtAdapter.createAccessTokenSync(new ObjectId().toString(), SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!),
+  AT_01: JwtAdapter.createAccessTokenSync(new ObjectId().toString(), SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!),
 };
 
 export const invalidAccessTokens = {
@@ -21,11 +21,11 @@ export const invalidAccessTokens = {
   AT_06: undefined,
   AT_07: [],
   AT_08: {},
-  AT_09: jwtAdapter.createAccessTokenSync(invalidUserIds.id_01, SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!),
+  AT_09: JwtAdapter.createAccessTokenSync(invalidUserIds.id_01, SETTINGS.AT_SECRET!, SETTINGS.AT_TIME!),
 };
 
 export const validRefreshTokens = {
-  RT_01: jwtAdapter.createRefreshTokenSync(
+  RT_01: JwtAdapter.createRefreshTokenSync(
     new ObjectId().toString(),
     new ObjectId().toString(),
     SETTINGS.RT_SECRET!,
@@ -43,7 +43,7 @@ export const invalidRefreshTokens = {
   RT_07: [],
   RT_08: {},
 
-  RT_09: jwtAdapter.createRefreshTokenSync(
+  RT_09: JwtAdapter.createRefreshTokenSync(
     invalidUserIds.id_01,
     invalidDeviceIds.id_01,
     SETTINGS.RT_SECRET!,

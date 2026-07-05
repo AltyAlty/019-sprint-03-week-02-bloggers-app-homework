@@ -1,8 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
-import { authRepository } from '../../repositories/auth.repository';
+import { AuthRepository } from '../../repositories/auth.repository';
 import { RequestRateLimitLogType } from '../../application/types/request-rate-limit-log.type';
 import { HttpStatuses } from '../../../core/types/http-statuses';
 import { SETTINGS } from '../../../core/settings/settings';
+import { container } from '../../../composition-root';
+
+/**/
+const authRepository = container.get<AuthRepository>(AuthRepository);
 
 /*Guard-middleware для лимитирования запросов.*/
 export const requestRateLimitGuardMiddleware = async (

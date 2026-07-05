@@ -1,11 +1,11 @@
 import { getCreateUserInputDTO } from '../../utils/users/input-dto-utils/get-create-user-input-dto.test-util';
 import { doBeforeTestsWithMongoMemoryServer } from '../../utils/common/do-before-tests.test-util';
 import { CreateUserInputDTO } from '../../../src/users/routes/input-dto/create-user.input-dto';
-import { nodemailerAdapter } from '../../../src/auth/adapters/nodemailer.adapter';
-import { authService } from '../../../src/auth/application/auth.service';
+import { NodemailerAdapter } from '../../../src/auth/adapters/nodemailer.adapter';
+import { AuthService } from '../../../src/auth/application/auth.service';
 import { ResultStatuses } from '../../../src/core/types/result/result-statuses';
 import { emailExamples } from '../../../src/auth/email/email-examples';
-import { usersRepository } from '../../../src/users/repositories/users.repository';
+import { UsersRepository } from '../../../src/users/repositories/users.repository';
 import { UserDBType } from '../../../src/users/repositories/types/user-db.type';
 import { confirmUserByCode } from '../../utils/auth/confirm-user-by-code.test-util';
 import { Result } from '../../../src/core/types/result/result.type';
@@ -23,7 +23,7 @@ import {
 } from '../../test-doubles/spies';
 import { validUserAgents, validUUIDRegExp } from '../../test-data/auth.test-data';
 import { EmailConfirmationDBType } from '../../../src/auth/repositories/types/email-сonfirmation-db.type';
-import { authRepository } from '../../../src/auth/repositories/auth.repository';
+import { AuthRepository } from '../../../src/auth/repositories/auth.repository';
 import { UserOutputDTO } from '../../../src/users/routes/output-dto/user.output-dto';
 import { createUser } from '../../utils/users/create-user.test-util';
 import { RecoveryCodeDataDBType } from '../../../src/auth/repositories/types/recovery-code-data-db.type';
@@ -39,7 +39,7 @@ describe('Auth', () => {
   const app = doBeforeTestsWithMongoMemoryServer();
 
   it('✅ 001 should register a user when a valid body passed; 003. POST /api/auth/registration', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof nodemailerAdapter> = createMockEmailAdapter();
+    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
@@ -47,13 +47,13 @@ describe('Auth', () => {
 
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
 
-    const registerUserResult: Result<{ createdUserId: string }> = await authService.registerUser(
+    const registerUserResult: Result<{ createdUserId: string }> = await AuthService.registerUser(
       createUserData,
       mockEmailAdapter
     );
 
     const createdUserId: string = registerUserResult.data.createdUserId;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     expect(typeof createdUserId).toBe('string');
     expect(createdUserDB?.login).toEqual(createUserData.login);
     expect(createdUserDB?.email).toEqual(createUserData.email);
@@ -79,7 +79,7 @@ describe('Auth', () => {
   });
 
   it('✅ 002 should confirm user registration when a correct confirmation code passed; 004. POST /api/auth/registration-confirmation', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof nodemailerAdapter> = createMockEmailAdapter();
+    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
@@ -87,20 +87,20 @@ describe('Auth', () => {
 
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
 
-    const registerUserResult: Result<{ createdUserId: string }> = await authService.registerUser(
+    const registerUserResult: Result<{ createdUserId: string }> = await AuthService.registerUser(
       createUserData,
       mockEmailAdapter
     );
 
     const createdUserId: string = registerUserResult.data.createdUserId;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
 
     const emailConfirmationDB: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     await confirmUserByCode(app, validUserAgents.userAgent_01, emailConfirmationDB?.confirmationCode);
 
-    const confirmedUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const confirmedUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     expect(createdUserDB?.isConfirmed).toBeFalsy();
     expect(confirmedUserDB?.isConfirmed).toBeTruthy();
     expect(mockEmailAdapter.sendMail).toHaveBeenCalledTimes(1);
@@ -114,7 +114,7 @@ describe('Auth', () => {
   });
 
   it('✅ 003 should resend a confirmation mail when a correct email passed; 005. POST /api/auth/registration-email-resending', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof nodemailerAdapter> = createMockEmailAdapter();
+    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
@@ -122,26 +122,26 @@ describe('Auth', () => {
 
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
 
-    const registerUserResult: Result<{ createdUserId: string }> = await authService.registerUser(
+    const registerUserResult: Result<{ createdUserId: string }> = await AuthService.registerUser(
       createUserData,
       mockEmailAdapter
     );
 
     const createdUserId: string = registerUserResult.data.createdUserId;
-    const createdUserDBBeforeResending: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDBBeforeResending: UserDBType | null = await UsersRepository.findById(createdUserId);
 
     const emailConfirmationDBBeforeResending: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
-    const resendConfirmationEmailResult: Result<{} | null> = await authService.resendConfirmationEmail(
+    const resendConfirmationEmailResult: Result<{} | null> = await AuthService.resendConfirmationEmail(
       createUserData.email,
       mockEmailAdapter
     );
 
-    const createdUserDBAfterResending: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDBAfterResending: UserDBType | null = await UsersRepository.findById(createdUserId);
 
     const emailConfirmationDBAfterResending: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     expect(createdUserDBBeforeResending?.isConfirmed).toBeFalsy();
     expect(createdUserDBAfterResending?.isConfirmed).toBeFalsy();
@@ -181,7 +181,7 @@ describe('Auth', () => {
   });
 
   it('✅ 004 should confirm user registration after resending a confirmation email when a correct confirmation code passed; 004. POST /api/auth/registration-confirmation', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof nodemailerAdapter> = createMockEmailAdapter();
+    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
     const usersServiceCreateSpy: jest.SpyInstance = createUsersServiceCreateSpy();
     const usersServiceConfirmByCodeSpy: jest.SpyInstance = createUsersServiceConfirmByCodeSpy();
     const authServiceUpdateEmailConfirmationByUserIdSpy: jest.SpyInstance =
@@ -189,20 +189,20 @@ describe('Auth', () => {
 
     const createUserData: CreateUserInputDTO = getCreateUserInputDTO();
 
-    const registerUserResult: Result<{ createdUserId: string }> = await authService.registerUser(
+    const registerUserResult: Result<{ createdUserId: string }> = await AuthService.registerUser(
       createUserData,
       mockEmailAdapter
     );
 
     const createdUserId: string = registerUserResult.data.createdUserId;
-    await authService.resendConfirmationEmail(createUserData.email, mockEmailAdapter);
+    await AuthService.resendConfirmationEmail(createUserData.email, mockEmailAdapter);
 
     const emailConfirmationDBAfterResending: EmailConfirmationDBType | null =
-      await authRepository.findEmailConfirmationByUserId(createdUserId);
+      await AuthRepository.findEmailConfirmationByUserId(createdUserId);
 
     await confirmUserByCode(app, validUserAgents.userAgent_01, emailConfirmationDBAfterResending?.confirmationCode);
 
-    const confirmedUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const confirmedUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     expect(confirmedUserDB?.isConfirmed).toBeTruthy();
     expect(mockEmailAdapter.sendMail).toHaveBeenCalledTimes(2);
     expect(usersServiceCreateSpy).toHaveBeenCalledTimes(1);
@@ -229,7 +229,7 @@ describe('Auth', () => {
   });
 
   it('✅ 005 should send a recovery password mail when a correct email passed; 008. POST /api/auth/password-recovery', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof nodemailerAdapter> = createMockEmailAdapter();
+    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
 
     const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
       createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
@@ -248,7 +248,7 @@ describe('Auth', () => {
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
     const createdUserEmail: string = createdUser.email;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -256,18 +256,18 @@ describe('Auth', () => {
       password: createUserData.password,
     });
 
-    const sendRecoveryPasswordCodeResult: Result<{}> = await authService.sendRecoveryPasswordCode(
+    const sendRecoveryPasswordCodeResult: Result<{}> = await AuthService.sendRecoveryPasswordCode(
       createdUserEmail,
       mockEmailAdapter
     );
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     const createdUserDBAfterSendingRecoveryPasswordCode: UserDBType | null =
-      await usersRepository.findById(createdUserId);
+      await UsersRepository.findById(createdUserId);
 
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
 
     const getSecurityDeviceListResponse: SecurityDeviceListOutputDTO = await getSecurityDeviceList(
       app,
@@ -309,7 +309,7 @@ describe('Auth', () => {
   });
 
   it('✅ 006 should set a new password when a valid body passed; 009. POST /api/auth/new-password', async () => {
-    const mockEmailAdapter: jest.Mocked<typeof nodemailerAdapter> = createMockEmailAdapter();
+    const mockEmailAdapter: jest.Mocked<typeof NodemailerAdapter> = createMockEmailAdapter();
 
     const authRepositoryDeleteAllRecoveryCodesDataByUserIdSpy: jest.SpyInstance =
       createAuthRepositoryDeleteAllRecoveryCodesDataByUserIdSpy();
@@ -328,7 +328,7 @@ describe('Auth', () => {
     const createdUser: UserOutputDTO = await createUser(app, createUserData);
     const createdUserId: string = createdUser.id;
     const createdUserEmail: string = createdUser.email;
-    const createdUserDB: UserDBType | null = await usersRepository.findById(createdUserId);
+    const createdUserDB: UserDBType | null = await UsersRepository.findById(createdUserId);
     const testUserAgent: string = validUserAgents.userAgent_01;
 
     const { refreshToken }: { refreshToken: string } = await loginUserReturnAccessAndRefreshTokens(app, testUserAgent, {
@@ -336,18 +336,18 @@ describe('Auth', () => {
       password: createUserData.password,
     });
 
-    await authService.sendRecoveryPasswordCode(createdUserEmail, mockEmailAdapter);
+    await AuthService.sendRecoveryPasswordCode(createdUserEmail, mockEmailAdapter);
 
     const recoveryPasswordCodeDataDB: RecoveryCodeDataDBType | null =
-      await authRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
+      await AuthRepository.findRecoveryPasswordCodeDataByUserId(createdUserId);
 
     await setNewPasswordByRecoveryCode(app, testUserAgent, {
       newPassword: validUserPasswords.password_01,
       recoveryCode: recoveryPasswordCodeDataDB?.recoveryCode,
     });
 
-    const createdUserDBAfterSettingNewPassword: UserDBType | null = await usersRepository.findById(createdUserId);
-    const sessions: SessionDBType[] = await authRepository.findAllSessionsByUserId(createdUserId);
+    const createdUserDBAfterSettingNewPassword: UserDBType | null = await UsersRepository.findById(createdUserId);
+    const sessions: SessionDBType[] = await AuthRepository.findAllSessionsByUserId(createdUserId);
     await getSecurityDeviceList(app, testUserAgent, refreshToken, undefined, HttpStatuses.Unauthorized_401);
     expect(createdUserDB?.passwordHash).not.toBe(createdUserDBAfterSettingNewPassword?.passwordHash);
     expect(sessions).toBeInstanceOf(Array);

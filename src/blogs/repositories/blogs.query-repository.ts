@@ -5,16 +5,18 @@ import { db } from '../../db/mongodb/mongo.db';
 import { BlogSortFieldQueryInputDTO } from '../routes/input-dto/query/blog-sort-field-query.input-dto';
 import { SortDirection } from '../../core/types/pagination/sort-direction';
 import { BlogDBType } from './types/blog-db.type';
+import { injectable } from 'inversify';
 
 /*Query-репозиторий для работы с блогами в БД.*/
-export const blogsQueryRepository = {
+@injectable()
+export class BlogsQueryRepository {
   /*Метод для поиска блога по ID в БД.*/
   async findById(id: string): Promise<BlogDBType | null> {
     /*Просим коллекцию "blogsCollection" найти блог по ID в БД.*/
     const blog: BlogDBType | null = await db.blogsCollection.findOne({ _id: new ObjectId(id) });
     /*Если блог был найден, то возвращаем его, иначе возвращаем null.*/
     return blog ?? null;
-  },
+  }
 
   /*Метод для поиска блогов в БД.*/
   async findAll(queryDTO: GetBlogListQueryInputDTO): Promise<{ items: BlogDBType[]; totalCount: number }> {
@@ -64,5 +66,5 @@ export const blogsQueryRepository = {
 
     /*Возвращаем данные по блогам.*/
     return { items, totalCount };
-  },
-};
+  }
+}

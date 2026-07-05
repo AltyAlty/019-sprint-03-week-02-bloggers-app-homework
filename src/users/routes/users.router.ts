@@ -3,14 +3,16 @@ import { paginationValidationMiddleware } from '../../core/middlewares/validatio
 import { inputValidationResultMiddleware } from '../../core/middlewares/validation/input-validation-result.middleware';
 import { basicAuthGuardMiddleware } from '../../auth/middlewares/guard-middlewares/basic-auth.guard-middleware';
 import { idValidation } from '../../core/middlewares/validation/params-id-validation.middlewares';
-import { getUserListHandler } from './handlers/get-user-list.handler';
 import { UserSortFieldQueryInputDTO } from './input-dto/query/user-sort-field-query.input-dto';
-import { createUserHandler } from './handlers/create-user.handler';
-import { deleteUserByIdHandler } from './handlers/delete-user-by-id.handler';
 import { createUserInputValidation } from '../validation/users-input-validation.middlewares';
 import { SETTINGS } from '../../core/settings/settings';
+import { container } from '../../composition-root';
+import { UsersController } from './users.controller';
 
-/*Роутер из Express для работы с данными по пользователям.*/
+/**/
+const usersController = container.get<UsersController>(UsersController);
+
+/*Роутер из Express для работы с пользователями.*/
 export const usersRouter: Router = Router({});
 /*Применяем middleware "basicAuthGuardMiddleware" ко всем маршрутам.*/
 usersRouter.use(basicAuthGuardMiddleware);
@@ -22,9 +24,19 @@ usersRouter
     SETTINGS.GET_USER_LIST_PATH,
     paginationValidationMiddleware(UserSortFieldQueryInputDTO),
     inputValidationResultMiddleware,
-    getUserListHandler
+    usersController.getUserListHandler.bind(usersController)
   )
   /*002. POST-запрос по добавлению пользователя.*/
-  .post(SETTINGS.CREATE_USER_PATH, createUserInputValidation, inputValidationResultMiddleware, createUserHandler)
+  .post(
+    SETTINGS.CREATE_USER_PATH,
+    createUserInputValidation,
+    inputValidationResultMiddleware,
+    usersController.createUserHandler.bind(usersController)
+  )
   /*003. DELETE-запрос по удалению пользователя по ID, используя URI-параметры.*/
-  .delete(SETTINGS.DELETE_USER_BY_ID_PATH, idValidation, inputValidationResultMiddleware, deleteUserByIdHandler);
+  .delete(
+    SETTINGS.DELETE_USER_BY_ID_PATH,
+    idValidation,
+    inputValidationResultMiddleware,
+    usersController.deleteUserByIdHandler.bind(usersController)
+  );

@@ -5,16 +5,18 @@ import { GetCommentListByPostIdQueryInputDTO } from '../routes/input-dto/query/g
 import { SortDirection } from '../../core/types/pagination/sort-direction';
 import { CommentSortFieldQueryInputDTO } from '../routes/input-dto/query/comment-sort-field-query.input-dto';
 import { CommentDBType } from './types/comment-db.type';
+import { injectable } from 'inversify';
 
 /*Query-репозиторий для работы с комментариями в БД.*/
-export const commentsQueryRepository = {
+@injectable()
+export class CommentsQueryRepository {
   /*Метод для поиска комментария по ID в БД.*/
   async findById(id: string): Promise<CommentDBType | null> {
     /*Просим коллекцию "commentsCollection" найти комментарий по ID в БД.*/
     const comment: CommentDBType | null = await db.commentsCollection.findOne({ _id: new ObjectId(id) });
     /*Если комментарий был найден, то возвращаем его, иначе возвращаем null.*/
     return comment ?? null;
-  },
+  }
 
   /*Метод для поиска комментариев по ID поста в БД.*/
   async findAllByPostId(
@@ -56,5 +58,5 @@ export const commentsQueryRepository = {
 
     /*Возвращаем данные по комментариям.*/
     return { items, totalCount };
-  },
-};
+  }
+}

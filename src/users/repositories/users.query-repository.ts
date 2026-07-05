@@ -5,16 +5,18 @@ import { GetUserListQueryInputDTO } from '../routes/input-dto/query/get-user-lis
 import { SortDirection } from '../../core/types/pagination/sort-direction';
 import { UserSortFieldQueryInputDTO } from '../routes/input-dto/query/user-sort-field-query.input-dto';
 import { UserDBType } from './types/user-db.type';
+import { injectable } from 'inversify';
 
 /*Query-репозиторий для работы с пользователями в БД.*/
-export const usersQueryRepository = {
+@injectable()
+export class UsersQueryRepository {
   /*Метод для поиска пользователя по ID в БД.*/
   async findById(id: string): Promise<UserDBType | null> {
     /*Просим коллекцию "usersCollection" найти пользователя по ID в БД.*/
     const user: UserDBType | null = await db.usersCollection.findOne({ _id: new ObjectId(id) });
     /*Если пользователь был найден, то возвращаем его, иначе возвращаем null.*/
     return user ?? null;
-  },
+  }
 
   /*Метод для поиска пользователей в БД.*/
   async findAll(queryDTO: GetUserListQueryInputDTO): Promise<{ items: UserDBType[]; totalCount: number }> {
@@ -59,5 +61,5 @@ export const usersQueryRepository = {
 
     /*Возвращаем данные по пользователям.*/
     return { items, totalCount };
-  },
-};
+  }
+}

@@ -5,16 +5,18 @@ import { GetPostListQueryInputDTO } from '../routes/input-dto/query/get-post-lis
 import { SortDirection } from '../../core/types/pagination/sort-direction';
 import { PostSortFieldQueryInputDTO } from '../routes/input-dto/query/post-sort-field-query.input-dto';
 import { PostDBType } from './types/post-db.type';
+import { injectable } from 'inversify';
 
 /*Query-репозиторий для работы с постами в БД.*/
-export const postsQueryRepository = {
+@injectable()
+export class PostsQueryRepository {
   /*Метод для поиска поста по ID в БД.*/
   async findById(id: string): Promise<PostDBType | null> {
     /*Просим коллекцию "postsCollection" найти пост по ID в БД.*/
     const post: PostDBType | null = await db.postsCollection.findOne({ _id: new ObjectId(id) });
     /*Если пост был найден, то возвращаем его, иначе возвращаем null.*/
     return post ?? null;
-  },
+  }
 
   /*Метод для поиска постов в БД.*/
   async findAll(
@@ -56,5 +58,5 @@ export const postsQueryRepository = {
 
     /*Возвращаем данные по постам.*/
     return { items, totalCount };
-  },
-};
+  }
+}

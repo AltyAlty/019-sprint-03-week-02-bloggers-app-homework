@@ -1,9 +1,13 @@
 import { body, ValidationChain } from 'express-validator';
-import { usersRepository } from '../../users/repositories/users.repository';
+import { UsersRepository } from '../../users/repositories/users.repository';
 import { UserDBType } from '../../users/repositories/types/user-db.type';
 import { EmailConfirmationDBType } from '../repositories/types/email-сonfirmation-db.type';
-import { authRepository } from '../repositories/auth.repository';
+import { AuthRepository } from '../repositories/auth.repository';
 import { RecoveryCodeDataDBType } from '../repositories/types/recovery-code-data-db.type';
+import { container } from '../../composition-root';
+
+const authRepository = container.get<AuthRepository>(AuthRepository);
+const usersRepository = container.get<UsersRepository>(UsersRepository);
 
 const loginOrEmailValidation: ValidationChain = body('loginOrEmail')
   .exists()

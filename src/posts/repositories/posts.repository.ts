@@ -3,16 +3,18 @@ import { PostType } from '../application/types/post.type';
 import { DeleteResult, InsertOneResult, ObjectId, UpdateResult } from 'mongodb';
 import { UpdatePostByIdInputDTO } from '../routes/input-dto/update-post-by-id.input-dto';
 import { PostDBType } from './types/post-db.type';
+import { injectable } from 'inversify';
 
 /*Репозиторий для работы с постами в БД.*/
-export const postsRepository = {
+@injectable()
+export class PostsRepository {
   /*Метод для добавления поста в БД.*/
   async create(newPost: PostType): Promise<string> {
     /*Просим коллекцию "postsCollection" создать пост в БД.*/
     const insertResult: InsertOneResult<PostType> = await db.postsCollection.insertOne(newPost);
     /*Возвращаем ID созданного поста.*/
     return insertResult.insertedId.toString();
-  },
+  }
 
   /*Метод для поиска поста по ID в БД.*/
   async findById(id: string): Promise<PostDBType | null> {
@@ -20,7 +22,7 @@ export const postsRepository = {
     const post: PostDBType | null = await db.postsCollection.findOne({ _id: new ObjectId(id) });
     /*Если пост был найден, то возвращаем его, иначе возвращаем null.*/
     return post ?? null;
-  },
+  }
 
   /*Метод для поиска постов по ID блога в БД.*/
   async findAllByBlogId(blogId: string): Promise<PostDBType[] | null> {
@@ -28,7 +30,7 @@ export const postsRepository = {
     const posts: PostDBType[] = await db.postsCollection.find({ blogId }).toArray();
     /*Если посты были найдены, то возвращаем их, иначе возвращаем null.*/
     return !posts || posts.length === 0 ? null : posts;
-  },
+  }
 
   /*Метод для изменения поста по ID в БД.*/
   async updateById(id: string, dto: UpdatePostByIdInputDTO): Promise<number> {
@@ -40,7 +42,7 @@ export const postsRepository = {
 
     /*Возвращаем количество постов, попавших под фильтр.*/
     return updateResult.matchedCount;
-  },
+  }
 
   /*Метод для удаления поста по ID в БД.*/
   async deleteById(id: string): Promise<number> {
@@ -48,7 +50,7 @@ export const postsRepository = {
     const deleteResult: DeleteResult = await db.postsCollection.deleteOne({ _id: new ObjectId(id) });
     /*Возвращаем количество удаленных постов.*/
     return deleteResult.deletedCount;
-  },
+  }
 
   /*Метод для удаления постов по ID блога в БД.*/
   async deleteAllByBlogId(blogId: string): Promise<number> {
@@ -56,5 +58,5 @@ export const postsRepository = {
     const deleteResult: DeleteResult = await db.postsCollection.deleteMany({ blogId });
     /*Возвращаем количество удаленных постов.*/
     return deleteResult.deletedCount;
-  },
-};
+  }
+}
