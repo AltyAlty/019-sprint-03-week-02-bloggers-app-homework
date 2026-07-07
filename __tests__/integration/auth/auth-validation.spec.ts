@@ -78,7 +78,6 @@ describe('Auth Validation', () => {
   const usersRepositoryUpdatePasswordHashByIdSpy: jest.SpyInstance = createUsersRepositoryUpdatePasswordHashByIdSpy();
   const authServiceDeleteRecoveryCodeSpy: jest.SpyInstance = createAuthServiceDeleteRecoveryCodeDataSpy();
   const authServiceRevokeAllSessionsByUserIdSpy: jest.SpyInstance = createAuthServiceRevokeAllSessionsByUserIdSpy();
-
   const authService = container.get<AuthService>(TYPES.AuthService);
   const usersService = container.get<UsersService>(TYPES.UsersService);
   const authRepository = container.get<AuthRepository>(TYPES.AuthRepository);
