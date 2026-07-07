@@ -70,7 +70,8 @@ export class RefreshTokenGuardMiddleware {
     /*Если декодирование RT прошло успешно, то формируем дату создания RT.*/
     const refreshTokenIatDate: Date = new Date(refreshTokenPayload.iat * 1000);
 
-    /*Просим репозиторий "authRepository" найти сессию по ID пользователя и ID устройства пользователя в БД.*/
+    /*Просим репозиторий "authRepository" найти сессию по ID пользователя, ID устройства пользователя и дате выдачи RT
+    в БД.*/
     const sessionDB: SessionDBType | null = await this.authRepository.findSessionByUserIdAndDeviceIdAndIat(
       userIdFromRT,
       deviceIdFromRT,
